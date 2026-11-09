@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="예시 이미지">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe0c6"/><stop offset="1" stop-color="#eef9f0"/></linearGradient></defs>
+<rect width="1200" height="900" fill="url(#g)"/>
+<circle cx="900" cy="250" r="92" fill="#fffbe6" opacity=".95"/>
+<path d="M0 620 C 220 520 420 560 620 600 C 820 640 1000 560 1200 600 L1200 900 L0 900 Z" fill="#78b283"/>
+<path d="M0 720 C 260 640 460 700 700 730 C 900 755 1060 700 1200 720 L1200 900 L0 900 Z" fill="#559063"/>
+<rect x="470" y="820" width="260" height="46" rx="23" fill="#ffffff" opacity=".82"/>
+<text x="600" y="851" text-anchor="middle" font-family="Malgun Gothic, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#33404f">예시 이미지</text>
+</svg>

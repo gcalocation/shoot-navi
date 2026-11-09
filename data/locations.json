@@ -1,0 +1,162 @@
+{
+  "meta": {
+    "generatedAt": "2026-11-09 15:21",
+    "count": 9,
+    "hasSample": true
+  },
+  "items": [
+    {
+      "id": "jarasum",
+      "name": "가평 자라섬",
+      "sigun": "가평군",
+      "type": "공원·광장",
+      "summary": "강 가운데 섬에 자리한 넓은 공원입니다. 잔디밭과 강변 풍경이 탁 트인 장면에 어울립니다.",
+      "tags": [
+        "뮤직비디오",
+        "광고",
+        "숏폼"
+      ],
+      "note": "공개된 장소라도 촬영 전에 관리 주체(지자체·관리사무소)와 협의하세요.",
+      "photo": "img/locations/sample-jarasum.svg",
+      "credit": "예시 이미지",
+      "featured": "이번 주",
+      "sample": true
+    },
+    {
+      "id": "mulgarden",
+      "name": "남양주 물의정원",
+      "sigun": "남양주시",
+      "type": "공원·광장",
+      "summary": "강변에 조성된 수변 공원입니다. 산책로와 물가 풍경이 이어져 일상·로맨스 장면에 쓰기 좋습니다.",
+      "tags": [
+        "드라마",
+        "단편",
+        "뮤직비디오"
+      ],
+      "note": "공개된 장소라도 촬영 전에 관리 주체(지자체·관리사무소)와 협의하세요.",
+      "photo": "img/locations/sample-mulgarden.svg",
+      "credit": "예시 이미지",
+      "featured": "이번 주",
+      "sample": true
+    },
+    {
+      "id": "heyri",
+      "name": "파주 헤이리 예술마을",
+      "sigun": "파주시",
+      "type": "상업·식당",
+      "summary": "갤러리와 공방, 카페가 모여 있는 예술 마을입니다. 골목과 건축물이 다양해 감각적인 분위기의 장면에 잘 어울립니다.",
+      "tags": [
+        "뮤직비디오",
+        "단편",
+        "광고"
+      ],
+      "note": "공개된 장소라도 촬영 전에 관리 주체(지자체·관리사무소)와 협의하세요.",
+      "photo": "img/locations/sample-heyri.svg",
+      "credit": "예시 이미지",
+      "featured": "이달의",
+      "sample": true
+    },
+    {
+      "id": "dumulmeori",
+      "name": "양평 두물머리",
+      "sigun": "양평군",
+      "type": "자연·산·숲",
+      "summary": "두 강이 만나는 나루터와 오래된 나무가 있는 풍경입니다. 새벽 안개와 일출 장면을 찍으러 많이 찾습니다.",
+      "tags": [
+        "극영화",
+        "뮤직비디오",
+        "다큐멘터리"
+      ],
+      "note": "이른 아침 촬영이 많아 주차와 방문객 동선을 미리 확인하세요.",
+      "photo": "img/locations/sample-dumulmeori.svg",
+      "credit": "예시 이미지",
+      "featured": "이달의",
+      "sample": true
+    },
+    {
+      "id": "hwaseong",
+      "name": "수원 화성",
+      "sigun": "수원시",
+      "type": "종교·전통",
+      "summary": "성곽과 성문이 이어진 전통 건축 장소입니다. 사극이나 전통 분위기의 장면에 어울립니다.",
+      "tags": [
+        "드라마",
+        "극영화",
+        "다큐멘터리"
+      ],
+      "note": "문화유산 구역이라 관리 주체와의 사전 협의가 꼭 필요합니다.",
+      "photo": "img/locations/sample-hwaseong.svg",
+      "credit": "예시 이미지",
+      "featured": "이달의",
+      "sample": true
+    },
+    {
+      "id": "daebudo",
+      "name": "안산 대부도 메타세쿼이아길",
+      "sigun": "안산시",
+      "type": "자연·산·숲",
+      "summary": "바다 가까이에 길게 이어진 가로수 길입니다. 차량이 천천히 지나가는 장면이나 산책 장면을 찍기에 좋습니다.",
+      "tags": [
+        "극영화",
+        "뮤직비디오",
+        "광고"
+      ],
+      "note": "차량 통행이 있는 길이라 안전 통제 계획이 필요합니다.",
+      "photo": "img/locations/sample-daebudo.svg",
+      "credit": "예시 이미지",
+      "featured": "이달의",
+      "sample": true
+    },
+    {
+      "id": "artvalley",
+      "name": "포천 아트밸리",
+      "sigun": "포천시",
+      "type": "공장·폐건물",
+      "summary": "채석장이었던 곳을 문화 공간으로 바꾼 장소입니다. 암벽과 호수가 어우러진 독특한 풍경이 특징입니다.",
+      "tags": [
+        "극영화",
+        "뮤직비디오",
+        "광고"
+      ],
+      "note": "유료 시설이라 입장·촬영 조건을 관리 주체에 확인하세요.",
+      "photo": "img/locations/sample-artvalley.svg",
+      "credit": "예시 이미지",
+      "featured": "상시",
+      "sample": true
+    },
+    {
+      "id": "gaetgol",
+      "name": "시흥 갯골생태공원",
+      "sigun": "시흥시",
+      "type": "바다·해변",
+      "summary": "갯벌과 염전 풍경이 이어지는 생태공원입니다. 쓸쓸하거나 탁 트인 분위기의 장면에 어울립니다.",
+      "tags": [
+        "단편",
+        "다큐멘터리",
+        "뮤직비디오"
+      ],
+      "note": "공개된 장소라도 촬영 전에 관리 주체(지자체·관리사무소)와 협의하세요.",
+      "photo": "img/locations/sample-gaetgol.svg",
+      "credit": "예시 이미지",
+      "featured": "상시",
+      "sample": true
+    },
+    {
+      "id": "jaein",
+      "name": "연천 재인폭포",
+      "sigun": "연천군",
+      "type": "자연·산·숲",
+      "summary": "한탄강 협곡으로 떨어지는 폭포와 절벽이 어우러진 장소입니다. 웅장한 자연 풍경이 필요한 장면에 어울립니다.",
+      "tags": [
+        "극영화",
+        "다큐멘터리",
+        "광고"
+      ],
+      "note": "지질공원 구역이라 관리 주체와의 사전 협의가 필요합니다.",
+      "photo": "img/locations/sample-jaein.svg",
+      "credit": "예시 이미지",
+      "featured": "상시",
+      "sample": true
+    }
+  ]
+}

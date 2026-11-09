@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#e5eaed" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#182027" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="noindex">
+  <title>경기 촬영 내비 | 장비 대여와 로케이션 정보</title>
+  <meta name="description" content="경기도에서 촬영할 때 필요한 안전통제 물품을 예약하고, 촬영 준비와 로케이션 정보를 확인하세요. 개인정보를 받지 않습니다.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip" href="#app">본문으로 바로가기</a>
+
+  <header class="top">
+    <div class="wrap top-in">
+      <a class="brand" href="#/" aria-label="경기 촬영 내비 홈">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="brand-name">경기 촬영 내비</span>
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="#/gear" data-nav="gear">장비 대여</a>
+        <a href="#/kit" data-nav="kit">키트 추천</a>
+        <a href="#/prep" data-nav="prep">촬영 준비</a>
+        <a href="#/places" data-nav="places">로케이션 소개</a>
+        <a href="#/trends" data-nav="trends">트렌드</a>
+        <a href="#/my" data-nav="my">내 예약</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="notice" role="note">
+    <div class="wrap">
+      <p><strong>개인정보를 받지 않아요.</strong> 이름·연락처는 이 사이트 어디에도 입력하지 않습니다. <a href="#/privacy">받지 않는 정보 보기</a></p>
+      <p id="notice-demo" hidden>지금 보는 화면은 시연용이라 예약이 실제로 접수되지 않아요.</p>
+    </div>
+  </div>
+
+  <main id="app" class="wrap" tabindex="-1" aria-live="polite">
+    <p class="loading">불러오는 중…</p>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-box">
+        <p id="foot-org"></p>
+        <p class="muted">물품 수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다. <a href="#/privacy">개인정보와 공개 원칙</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="tabbar" aria-label="하단 메뉴">
+    <a href="#/" data-nav="home">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>홈</span></a>
+    <a href="#/gear" data-nav="gear">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>
+      <span>대여</span></a>
+    <a href="#/kit" data-nav="kit">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h9m4 0h5M3 12h3m4 0h11M3 18h11m4 0h3"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg>
+      <span>키트</span></a>
+    <a href="#/places" data-nav="places trends prep">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      <span>로케이션</span></a>
+    <a href="#/my" data-nav="my receipt">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>
+      <span>내 예약</span></a>
+  </nav>
+
+  <script src="js/core.js"></script>
+  <script src="js/kit.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "_comment": "물품 마스터(데모·기본값). 실제 운영에서는 백엔드 시트의 '물품' 탭이 우선합니다. 보유 수량은 임의 값이므로 실제 수량으로 바꿔야 합니다.",
+  "settings": {
+    "maxDays": 14,
+    "minAdvanceDays": 1,
+    "maxAdvanceDays": 90,
+    "closedDates": ["2026-12-25", "2027-01-01"],
+    "maxActive": 60
+  },
+  "items": [
+    {"id": "walkie",     "name": "무전기 (충전기·인이어 포함)", "category": "안전통제", "stock": 20, "max": 20, "icon": "📻", "note": "통제 지점과 제작부가 서로 연락할 때 씁니다."},
+    {"id": "baton",      "name": "경광봉",               "category": "안전통제", "stock": 20, "max": 20, "icon": "🔦", "note": "차량·보행자 유도, 야간 식별용입니다."},
+    {"id": "cone",       "name": "라바콘",               "category": "안전통제", "stock": 50, "max": 50, "icon": "🔶", "note": "구역 표시용 기본 콘입니다."},
+    {"id": "heavycone",  "name": "슈퍼헤비콘",             "category": "안전통제", "stock": 20, "max": 20, "icon": "🚧", "note": "도로 통제처럼 안정적인 구획이 필요할 때 씁니다."},
+    {"id": "hangbar",    "name": "슈퍼헤비콘 걸이봉",       "category": "안전통제", "stock": 10, "max": 10, "icon": "➖", "note": "슈퍼헤비콘과 함께 사용하는 물품입니다."},
+    {"id": "fence",      "name": "안전펜스 세트",           "category": "안전통제", "stock": 5,  "max": 5,  "icon": "🧱", "note": "보행자가 모이는 곳에서 촬영 구역을 구분합니다."},
+    {"id": "vest",       "name": "안전 조끼",             "category": "안전통제", "stock": 30, "max": 30, "icon": "🦺", "note": "안전통제 장비를 빌리면 함께 빌려야 합니다."},
+    {"id": "signboard",  "name": "촬영안내 입간판",         "category": "안전통제", "stock": 6,  "max": 6,  "icon": "🪧", "note": "지나가는 주민에게 촬영 중임을 알립니다."},
+    {"id": "lantern",    "name": "랜턴",                 "category": "안전통제", "stock": 10, "max": 10, "icon": "🏮", "note": "야간 통제 구간 표시용입니다."},
+    {"id": "chair",      "name": "감독의자 (접이식)",       "category": "촬영지원", "stock": 6,  "max": 6,  "icon": "🪑", "note": ""},
+    {"id": "clapper",    "name": "클래퍼보드 (슬레이트)",    "category": "촬영지원", "stock": 4,  "max": 4,  "icon": "🎬", "note": ""},
+    {"id": "wagon",      "name": "캠핑 웨건",             "category": "촬영지원", "stock": 4,  "max": 4,  "icon": "🛒", "note": "짐 이동용입니다."},
+    {"id": "powerbank",  "name": "파워뱅크 (에코플로우 리버프로)", "category": "촬영지원", "stock": 4, "max": 2, "icon": "🔋", "note": "고가 물품입니다. 수령 때 신분 확인과 변상 동의가 필요합니다."},
+    {"id": "gopro5",     "name": "GoPro HERO5 Black (그립 암 포함)", "category": "촬영지원", "stock": 2, "max": 2, "icon": "📷", "note": "고가 물품입니다. 수령 때 신분 확인과 변상 동의가 필요합니다."},
+    {"id": "gopromax",   "name": "GoPro MAX (그립 암 포함)", "category": "촬영지원", "stock": 2, "max": 2, "icon": "📹", "note": "고가 물품입니다. 수령 때 신분 확인과 변상 동의가 필요합니다."}
+  ]
+}

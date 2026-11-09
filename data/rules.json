@@ -1,0 +1,46 @@
+{
+  "_comment": "AI 키트 추천의 수량 규칙표입니다. 수량은 이 표로만 계산합니다(AI가 숫자를 정하지 않음). 숫자는 초안이며 담당자가 현장 기준으로 검수·수정해야 합니다. qty = base + perControl×통제지점수 + perTier×스탭규모단계(0~4), 그 뒤 min/max 적용, 올림.",
+  "reviewed": false,
+  "options": {
+    "place": [
+      {"v": "road", "t": "도로·차도"},
+      {"v": "residential", "t": "주거지·골목"},
+      {"v": "park", "t": "공원·광장"},
+      {"v": "commercial", "t": "상가·시장"},
+      {"v": "public", "t": "학교·공공시설"},
+      {"v": "nature", "t": "산·바다·자연"},
+      {"v": "indoor", "t": "실내(건물 안)"}
+    ],
+    "time": [{"v": "day", "t": "낮에만 촬영"}, {"v": "night", "t": "야간 촬영이 있음"}],
+    "hours": [{"v": "short", "t": "하루 4시간 이하"}, {"v": "long", "t": "반나절 이상"}],
+    "staff": ["9명 이하", "10~29명", "30~59명", "60~99명", "100명 이상"]
+  },
+  "caps": {"walkie": 20, "baton": 20, "cone": 50, "heavycone": 20, "hangbar": 10, "fence": 5, "signboard": 6, "lantern": 10, "chair": 6, "clapper": 2, "wagon": 3, "powerbank": 2},
+  "rules": [
+    {"item": "walkie", "when": {}, "qty": {"base": 2, "perControl": 1, "perTier": 1}, "why": "통제 지점과 연출·제작부가 바로 연락하려면 필요합니다. 통제 지점 수와 스탭 규모에 맞춰 늘렸습니다."},
+
+    {"item": "baton", "when": {"minControl": 1}, "qty": {"base": 0, "perControl": 2}, "why": "통제 지점마다 2개(양쪽 유도)를 기준으로 잡았습니다."},
+    {"item": "baton", "when": {"time": ["night"], "minControl": 1}, "qty": {"base": 2}, "why": "야간에는 멀리서도 보이도록 여유분을 더했습니다."},
+    {"item": "baton", "when": {"vehicle": true, "minControl": 1}, "qty": {"perControl": 1}, "why": "차량이 지나가는 장면은 통제 지점마다 1개씩 더 필요합니다."},
+
+    {"item": "cone", "when": {"place": ["road"], "minControl": 1}, "qty": {"perControl": 6}, "why": "도로 통제는 지점당 6개를 기준으로 잡았습니다."},
+    {"item": "cone", "when": {"notPlace": ["road", "indoor"], "minControl": 1}, "qty": {"perControl": 3}, "why": "도로 밖 통제는 지점당 3개를 기준으로 잡았습니다."},
+    {"item": "cone", "when": {"vehicle": true, "notPlace": ["road"], "minControl": 1}, "qty": {"perControl": 3}, "why": "차량이 지나가면 구역 표시를 더 길게 해야 합니다."},
+
+    {"item": "heavycone", "when": {"place": ["road"], "vehicle": true, "minControl": 1}, "qty": {"perControl": 2}, "why": "차량이 지나가는 도로는 쉽게 밀리지 않는 슈퍼헤비콘이 필요합니다."},
+    {"item": "hangbar", "when": {"place": ["road"], "vehicle": true, "minControl": 1}, "qty": {"perControl": 1}, "why": "슈퍼헤비콘과 함께 사용하는 물품입니다."},
+
+    {"item": "fence", "when": {"crowd": true, "minControl": 1}, "qty": {"perControl": 1}, "why": "보행자·주민이 많은 곳은 안전펜스로 촬영 구역을 구분하는 것이 좋습니다."},
+
+    {"item": "signboard", "when": {"place": ["road", "residential", "commercial", "park", "public"], "minControl": 1}, "qty": {"perControl": 1}, "why": "지나가는 사람에게 촬영 중임을 알립니다. 안내 문구에는 작품명을 적지 않는 것을 권장합니다."},
+    {"item": "signboard", "when": {"place": ["residential", "commercial"], "minControl": 0, "crowd": true}, "qty": {"base": 1}, "why": "통제 지점이 없어도 주민이 많은 곳은 안내가 필요합니다."},
+
+    {"item": "lantern", "when": {"time": ["night"], "notPlace": ["indoor"]}, "qty": {"base": 2, "perControl": 1}, "why": "야간 통제 구간과 이동 동선을 표시합니다."},
+    {"item": "lantern", "when": {"time": ["night"], "place": ["nature"]}, "qty": {"base": 2}, "why": "조명이 없는 자연 지역은 이동 동선 표시가 더 필요합니다."},
+
+    {"item": "chair", "when": {"hours": ["long"]}, "qty": {"base": 1, "perTier": 1}, "why": "반나절 이상 촬영이면 연출·감독 휴식 자리가 필요합니다."},
+    {"item": "clapper", "when": {"kind": ["극영화/단편", "극영화/독립장편", "극영화/상업장편", "TV/OTT 드라마"]}, "qty": {"base": 1}, "why": "극영화·드라마 촬영의 컷 구분에 씁니다."},
+    {"item": "wagon", "when": {"hours": ["long"], "minTier": 1, "notPlace": ["indoor"]}, "qty": {"base": 1}, "why": "야외에서 짐을 옮길 일이 많은 규모입니다."},
+    {"item": "powerbank", "when": {"hours": ["long"], "notPlace": ["indoor"]}, "qty": {"base": 1}, "why": "야외에서 반나절 이상 촬영하면 전원이 부족할 수 있습니다."}
+  ]
+}

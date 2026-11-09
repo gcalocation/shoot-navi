@@ -1,0 +1,15 @@
+{
+  "_comment": "apiUrl이 비어 있으면 시연 화면으로 동작합니다(예약이 이 브라우저에만 저장되고 접수되지 않음). Apps Script 웹앱을 배포한 뒤 그 주소를 넣으세요.",
+  "apiUrl": "https://script.google.com/macros/s/AKfycby2kks_RyVUVkJ3z44BcZeTU7w8GgehnwOAxQXCNEsp6M9EPfe66T0CPOUWhirqQ-Iv/exec",
+  "orgName": "경기콘텐츠진흥원 영상산업팀",
+  "contact": "",
+  "applyFormUrl": "https://forms.gle/PdEjDcnQa56eVMHz7",
+  "applyFormNeedsLogin": true,
+  "filmkorea": {
+    "home": "https://www.filmkorea.or.kr/",
+    "location": "https://www.filmkorea.or.kr/location/location.jsp",
+    "request": "https://www.filmkorea.or.kr/film/request.jsp",
+    "contacts": "https://www.filmkorea.or.kr/member/contact_list.jsp"
+  },
+  "applyFormNote": "로케이션 촬영지원 신청은 기존 신청서로 접수합니다."
+}

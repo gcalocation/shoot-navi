@@ -362,3 +362,5 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
 /* 화면을 바꿀 때 본문 영역(main)에 프로그램이 포커스를 옮기는데, 이때 키보드용 파란 테두리가 잠깐 나타나던 것을 막는다.
    본문 영역은 누르거나 입력하는 요소가 아니라 테두리가 필요 없다(버튼·링크·입력칸의 포커스 표시는 그대로). */
 #app:focus, #app:focus-visible { outline: none; }
+
+main#app:focus, main#app:focus-visible, main#app:focus-within { outline: 0 !important; box-shadow: none; }

@@ -110,8 +110,10 @@
     $$('.nav a, .tabbar a').forEach(function (a) { if ((' ' + a.getAttribute('data-nav') + ' ').indexOf(' ' + name + ' ') >= 0) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     window.scrollTo(0, 0);
     views[name](parts.slice(1));
-    try { app.focus({ preventScroll: true }); } catch (e) { /* 무시 */ }
+    if (routed) { try { app.focus({ preventScroll: true }); } catch (e) { /* 무시 */ } }
+    routed = true;
   }
+  var routed = false;
 
   /* ---------- 홈 ---------- */
   views.home = function () {

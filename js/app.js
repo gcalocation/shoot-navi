@@ -37,7 +37,7 @@
     gopromax: svg('<rect x="4" y="6" width="16" height="12" rx="2"/><circle cx="9" cy="12" r="2.4"/><circle cx="15" cy="12" r="2.4"/>')
   };
   function itemIcon(it) { return '<span class="ico" aria-hidden="true">' + (ITEM_ICON[it.id] || (it.category === '안전통제' ? ICON.cone : ICON.camera)) + '</span>'; }
-  function ph(_unused, title, lede) { return '<header class="ph"><h1>' + K(title) + '</h1>' + (lede ? '<p class="lede">' + K(lede) + '</p>' : '') + '</header>'; }
+  function ph(_unused, title, lede, cls) { return '<header class="ph"><h1>' + K(title) + '</h1>' + (lede ? '<p class="lede' + (cls ? ' ' + cls : '') + '">' + K(lede) + '</p>' : '') + '</header>'; }
   function stepH(n, title, hint) { return '<div class="step-h"><span class="n">' + n + '</span><h2>' + title + '</h2>' + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>'; }
   function linkRow(href, icon, title, desc) { return '<a class="linkrow" href="' + href + '"><span class="ic">' + icon + '</span><span><b>' + title + '</b><span class="d">' + K(desc) + '</span></span></a>'; }
   function subnav(cur) { return '<nav class="subnav" aria-label="로케이션"><a href="#/places"' + (cur === 'places' ? ' aria-current="page"' : '') + '>장소 소개</a><a href="#/trends"' + (cur === 'trends' ? ' aria-current="page"' : '') + '>트렌드</a></nav>'; }
@@ -86,7 +86,7 @@
     return { min: Core.addDays(today, s.minAdvanceDays == null ? 1 : s.minAdvanceDays), max: Core.addDays(today, s.maxAdvanceDays || 90), maxDays: s.maxDays || 14 };
   }
   function statusBadge(st) {
-    var m = { '예약됨': ['', '예약됨 · 방문 수령 대기'], '수령': ['ok', '수령 완료 · 반납 전'], '반납': ['ok', '반납 완료'], '해제': ['warn', '자동 해제됨'], '취소': ['bad', '취소됨'] }[st] || ['', st];
+    var m = { '예약됨': ['', '예약됨 · 방문 수령 대기'], '수령': ['ok', '수령 완료 · 반납 전'], '반납': ['ok', '반납 완료'], '해제': ['warn', '자동 취소됨 · 수령일 미방문'], '취소': ['bad', '취소됨'] }[st] || ['', st];
     return '<span class="badge ' + m[0] + '">' + esc(m[1]) + '</span>';
   }
   function itemsTable(its) {
@@ -121,7 +121,7 @@
     app.innerHTML =
       '<section class="hero"><div>' +
       '<div class="frame"><h1>경기도 촬영,<br>장비부터 장소까지<br>한 곳에서 준비하세요.</h1></div>' +
-      '<p class="lede">' + K('안전통제 물품을 미리 예약하고, 촬영 환경에 맞는 구성을 추천받고, 경기도 촬영지를 둘러보세요.') + '</p>' +
+      '<p class="lede">' + K('안전통제 물품을 미리 예약하고,<br>촬영 환경에 맞는 구성을 추천받고,<br>경기도 촬영지를 둘러보세요.') + '</p>' +
       '<div class="row"><a class="btn" href="#/gear">장비 예약하기</a><a class="btn alt" href="#/kit">키트 추천받기</a></div>' +
       (formUrl() ? '<p class="muted" style="margin:20px 0 0">' + K('로케이션 촬영지원이 필요하다면 ') + ext(formUrl(), '촬영지원 신청서') + K('를 작성해 주세요.') + '</p>' : '') + '</div>' +
       '<aside class="sheet" aria-label="수령 가능 현황"><div class="sheet-h"><b>수령 가능 현황</b><span class="live"><i></i>' + (S.api.demo ? '예시' : '실시간') + '</span></div>' +
@@ -182,7 +182,7 @@
       chk('visitOnly', '수령과 반납은 진흥원을 직접 방문해서 합니다. 택배·퀵·우편 반납은 안 됩니다.') +
       chk('damage', '사용 중 또는 운반 중 파손·분실하면 같은 제품으로 변상합니다.') +
       chk('vest', '안전통제 장비를 빌리면 안전 조끼도 함께 빌리고, 함께 반납합니다.') +
-      chk('noPersonalInfo', '예약코드를 잃어버리면 다시 찾을 수 없고, 수령일 다음 날까지 방문하지 않으면 예약이 자동으로 해제됩니다.') +
+      chk('noPersonalInfo', '예약코드를 잃어버리면 다시 찾을 수 없고, 수령일 당일에 방문하지 않으면 예약이 자동으로 취소됩니다.') +
       '<div class="hp" aria-hidden="true" style="position:absolute;left:-9999px"><label>웹사이트 <input type="text" id="f-website" tabindex="-1" autocomplete="off"></label></div>' +
       '</section></div>' +
       '<div class="cartbar no-print"><div><strong id="cart-sum">선택한 물품이 없어요</strong><div id="cart-sub" class="muted"></div></div><button class="btn" type="submit" id="btn-submit">예약하기</button></div>' +
@@ -321,7 +321,7 @@
       '<div class="ticket-sub"><dl class="kv"><dt>수령일</dt><dd>' + ko(r.startDate) + '</dd>' + (r.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(r.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(r.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(r.sigun) + '</dd></dl>' +
       itemsTable(r.items) +
       msg('warn', '<strong>코드를 꼭 저장해 두세요.</strong> 이 사이트는 이름·연락처를 받지 않기 때문에 코드를 잃어버리면 예약을 찾을 수 없어요. 화면을 캡처하거나 적어 두세요. (이 기기에도 자동 저장돼요.)') +
-      msg('info', '수령일 <strong>다음 날까지</strong> 방문하지 않으면 예약이 자동으로 해제됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') + '</div></article>';
+      msg('info', '수령일 <strong>당일</strong>에 방문하지 않으면 예약이 자동으로 취소됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') + '</div></article>';
     $('#copy').addEventListener('click', function () {
       var b = this, done = function () { b.textContent = '복사했어요'; };
       if (navigator.clipboard) navigator.clipboard.writeText(r.code).then(done, done); else done();
@@ -333,7 +333,7 @@
   views.kit = function () {
     var o = S.rules.options, b = dateBounds();
     app.innerHTML =
-      ph('Kit', '키트 추천', '촬영 환경을 고르면 필요한 물품과_수량, 현장_체크리스트를 알려 드려요. 수량은 담당자가_정한 규칙표로 계산합니다.') +
+      ph('Kit', '키트 추천', '촬영 환경을 고르면 필요한 물품과 수량, 현장 체크리스트를 알려 드려요.', 'one') +
       '<form id="kit-form" class="plate" style="padding-top:30px;padding-bottom:26px" novalidate>' +
       f('촬영 장소', seg('place', o.place)) + f('촬영 시간', seg('time', o.time)) + f('하루 촬영 시간', seg('hours', o.hours)) +
       f('차량이 지나가거나 움직이는 장면이 있나요?', seg('vehicle', [{ v: '0', t: '아니요' }, { v: '1', t: '예' }])) +
@@ -409,7 +409,7 @@
       var x = r.reservation, can = x.status === '예약됨';
       out.innerHTML = '<div class="card"><h2>' + esc(x.code) + ' ' + statusBadge(x.status) + '</h2>' +
         '<dl class="kv"><dt>수령일</dt><dd>' + ko(x.startDate) + '</dd>' + (x.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(x.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(x.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(x.sigun) + '</dd></dl>' + itemsTable(x.items) +
-        (can ? msg('info', '수령일 다음 날까지 방문하지 않으면 자동으로 해제돼요.') : '') +
+        (can ? msg('info', '수령일 당일에 방문하지 않으면 자동으로 취소돼요.') : '') +
         '<div class="row no-print" style="margin-top:12px">' + ((x.status === '예약됨' || x.status === '수령' || x.status === '반납') ? '<a class="btn sm alt" href="#/receipt/' + esc(x.code) + '">인수증 미리 채워 인쇄</a>' : '') + (can ? '<button class="btn sm danger" id="cancel" type="button">예약 취소</button>' : '') + '</div></div>';
       var c = $('#cancel');
       if (c) c.addEventListener('click', function () {
@@ -452,7 +452,7 @@
   views.receipt = function (parts) {
     var code = parts[0] || '', toolbar = function (back) {
       return '<div class="no-print row" style="margin-bottom:14px"><button class="btn" id="do-print" type="button">인쇄하기</button><a class="btn alt" href="' + back + '">돌아가기</a></div>';
-    }, hint = msg('info', '이름·연락처·제작사·영상물 제목·성명·서명은 일부러 비워 두었어요. 현장에서 직접 적어 주세요.').replace('class="msg info"', 'class="msg info no-print"');
+    }, hint = msg('info', '이름·연락처·제작사·영상물 제목·성명·서명은 비워 두었어요. 현장에서 직접 적어 주세요.').replace('class="msg info"', 'class="msg info no-print"');
     function show(x, back) {
       app.innerHTML = toolbar(back) + hint + receiptHtml(x);
       $('#do-print').addEventListener('click', function () { window.print(); });
@@ -470,7 +470,7 @@
   /* ---------- 촬영 준비 ---------- */
   views.prep = function () {
     var o = S.rules.options;
-    app.innerHTML = ph('Prepare', '촬영 준비', '이 화면의 계산과 선택은 내 브라우저_안에서만 처리되고 서버로_보내지_않습니다.') +
+    app.innerHTML = ph('Prepare', '촬영 준비', '선택한 내용은 저장되지 않습니다.') +
       '<div class="card"><h2>로케이션 촬영지원 신청</h2>' + (S.cfg.applyFormUrl ? '<p>' + K(esc(S.cfg.applyFormNote || '') + loginHint()) + '</p><p><a class="btn" href="' + esc(S.cfg.applyFormUrl) + '" target="_blank" rel="noopener">촬영지원 신청서 열기</a></p>' : '<p>' + esc(S.cfg.applyFormNote || '') + ' 신청서 링크는 준비 중입니다.</p>') + '</div>' +
       '<div class="card"><h2>신청은 언제까지 해야 할까요?</h2><div class="fields"><div class="field"><label for="p-date">크랭크인(첫 촬영) 예정일</label><input type="date" id="p-date"></div><div class="field"><label for="p-kind">작품 종류</label><select id="p-kind">' + opts(Core.KINDS, Core.KINDS[0]) + '</select></div></div><button class="btn" id="p-go" type="button">확인하기</button><div id="p-out"></div></div>' +
       '<div class="card"><h2>우리 지역이 맞나요?</h2><div class="field"><label for="a-reg">촬영하려는 지역</label><select id="a-reg">' + opts(['경기도', '서울', '인천', '그 밖의 지역'], '', '선택') + '</select></div><div id="a-out"></div></div>' +

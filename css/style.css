@@ -96,6 +96,7 @@ main { padding-top: 38px; padding-bottom: 60px; min-height: 60vh; outline: none;
 /* ───── 화면 머리 ───── */
 .ph { margin-bottom: 34px; }
 .ph h1 { margin-bottom: 14px; }
+.lede.one { max-width: none; text-wrap: wrap; }
 .lede { color: var(--muted); max-width: 35em; font-size: 1.04rem; text-wrap: balance; margin-bottom: 0; }
 .sec-h { margin: 52px 0 22px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .sec-h h2 { margin: 0; }
@@ -321,6 +322,7 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
 .receipt h2 { text-align: center; font-size: 22px; margin-bottom: 14px; color: #000; }
 .receipt table { font-size: 14px; } .receipt th, .receipt td { border: 1px solid #555; padding: 6px 8px; color: #000; }
 .receipt th { background: #eee; text-align: center; font-size: 14px; }
+.receipt th, .receipt td { vertical-align: middle; }
 .receipt .blank { height: 34px; }
 .receipt td.c { text-align: center; }
 .receipt tr.tall th, .receipt tr.tall td { height: 58px; }

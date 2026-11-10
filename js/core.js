@@ -103,7 +103,7 @@ var Core = (function () {
   }
 
   function shouldExpire(r, today) {
-    return r.status === '예약됨' && today > addDays(r.startDate, 1);
+    return r.status === '예약됨' && today > r.startDate;
   }
 
   /* ---------- 예약 검증·생성 ---------- */

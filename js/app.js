@@ -5,7 +5,7 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var app = $('#app');
-  var S = { cfg: null, master: null, rules: null, texts: null, api: null, trends: undefined, places: undefined, cart: {}, start: '', end: '', avail: null, openedAt: 0, prefill: null };
+  var S = { slot: '', cfg: null, master: null, rules: null, texts: null, api: null, trends: undefined, places: undefined, cart: {}, start: '', end: '', avail: null, openedAt: 0, prefill: null };
   var store = Api.safeStore();
   var WD = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -119,14 +119,14 @@
     app.innerHTML =
       '<section class="hero"><div>' +
       '<div class="frame"><h1>경기도 촬영,<br>장비부터 장소까지<br>한 곳에서 준비하세요.</h1></div>' +
-      '<p class="lede">' + K('안전통제 물품을 미리 예약하고, 촬영 환경에 맞는 구성을 추천받고, 경기도 촬영지를 둘러보세요. 이름과_연락처는 받지 않습니다.') + '</p>' +
+      '<p class="lede">' + K('안전통제 물품을 미리 예약하고, 촬영 환경에 맞는 구성을 추천받고, 경기도 촬영지를 둘러보세요.') + '</p>' +
       '<div class="row"><a class="btn" href="#/gear">장비 예약하기</a><a class="btn alt" href="#/kit">키트 추천받기</a></div>' +
       (formUrl() ? '<p class="muted" style="margin:20px 0 0">' + K('로케이션 촬영지원이 필요하다면 ') + ext(formUrl(), '촬영지원 신청서') + K('를 작성해 주세요.') + '</p>' : '') + '</div>' +
       '<aside class="sheet" aria-label="수령 가능 현황"><div class="sheet-h"><b>수령 가능 현황</b><span class="live"><i></i>' + (S.api.demo ? '예시' : '실시간') + '</span></div>' +
       '<p class="sheet-d">' + ko(day) + ' 수령 기준</p><div class="stock" id="stock"><p class="muted">불러오는 중…</p></div>' +
       '<p class="sheet-f"><span class="muted">보유 수량 중 남은 수량</span><a href="#/gear">날짜 골라 예약하기</a></p></aside></section>' +
       '<div class="sec-h"><h2>이렇게 진행돼요</h2></div>' +
-      '<ol class="flow"><li><h3>예약코드 받기</h3><p>' + K('날짜와_물품을 고르면 코드가 나와요. 이름과_연락처는 입력하지 않아요.') + '</p></li>' +
+      '<ol class="flow"><li><h3>예약코드 받기</h3><p>' + K('날짜와_물품을 고르면 예약코드가 나와요.') + '</p></li>' +
       '<li><h3>방문해서 수령</h3><p>' + K('수령일에 진흥원에서 코드를 보여 주세요. 본인_확인은 현장_종이_인수증에 적어요.') + '</p></li>' +
       '<li><h3>직접 반납</h3><p>' + K('반납일에 방문해 반납합니다. 택배·퀵·우편은 받지_않아요.') + '</p></li></ol>' +
       '<div id="home-places"></div>' +
@@ -139,11 +139,13 @@
     S.api.availability(day, day).then(function (r) {
       var el = $('#stock'); if (!el) return;
       if (!r.ok) { el.innerHTML = '<p class="muted">현황을 불러오지 못했어요.</p>'; return; }
-      var ix = idx();
-      el.innerHTML = ['walkie', 'cone', 'baton', 'vest', 'fence'].filter(function (id) { return ix[id] && r.avail[id]; }).map(function (id) {
-        var a = r.avail[id], pct = Math.round(a.remaining / a.stock * 100);
+      var ix = idx(), main = ['walkie', 'cone', 'baton', 'vest', 'fence'].filter(function (id) { return ix[id] && r.avail[id]; });
+      var rows = main.map(function (id) {
+        var a = r.avail[id];
         return '<div class="stock-row"><span class="nm">' + esc(shortName(ix[id].name)) + '</span><span class="v num">' + a.remaining + ' <small>/ ' + a.stock + '</small></span>' + gaugeHtml(a.remaining, a.stock) + '</div>';
       }).join('');
+      var others = items().filter(function (it) { return main.indexOf(it.id) < 0 && r.avail[it.id]; });
+      el.innerHTML = rows + (others.length ? '<div class="more"><p class="more-h">그 밖에도 <b>' + others.length + '종</b>을 더 빌릴 수 있어요</p><div class="tags">' + others.map(function (it) { return '<span class="tag">' + esc(shortName(it.name)) + ' <b class="num">' + r.avail[it.id].remaining + '</b></span>'; }).join('') + '</div></div>' : '');
     }).catch(function () { var el = $('#stock'); if (el) el.innerHTML = '<p class="muted">현황을 불러오지 못했어요.</p>'; });
     loadPlaces().then(function (pl) {
       var el = $('#home-places'); if (!el || !pl || !pl.items.length) return;
@@ -164,7 +166,8 @@
       '<form id="gear-form" novalidate><div class="plate">' +
       '<section class="stepsec">' + stepH(1, '대여 기간') + '<div class="fields">' +
       '<div class="field"><label for="d-start">수령일 <span class="hint">평일만</span></label><input type="date" id="d-start" min="' + b.min + '" max="' + b.max + '" value="' + esc(S.start) + '"></div>' +
-      '<div class="field"><label for="d-end">반납일 <span class="hint">최대 ' + b.maxDays + '일</span></label><input type="date" id="d-end" min="' + b.min + '" max="' + b.max + '" value="' + esc(S.end) + '"></div></div>' +
+      '<div class="field"><label for="d-end">반납일 <span class="hint">최대 ' + b.maxDays + '일</span></label><input type="date" id="d-end" min="' + b.min + '" max="' + b.max + '" value="' + esc(S.end) + '"></div>' +
+      '<div class="field"><label for="d-slot">수령하러 오는 시간 <span class="hint">10시~17시</span></label><select id="d-slot">' + opts(Core.VISIT_SLOTS, S.slot, '시간대 선택') + '</select></div></div>' +
       '<div id="date-msg"></div></section>' +
       '<section class="stepsec">' + stepH(2, '빌릴 물품', '담은 수량은 주황 칸으로 보여요') + '<div id="items"><p class="muted">' + (Object.keys(S.cart).length ? '추천받은 구성이 담겨 있어요. 대여 기간을 고르면 남은 수량을 확인해 반영합니다.' : '먼저 대여 기간을 골라 주세요. 그 기간에 남은 수량이 나타납니다.') + '</p></div>' +
       '<p class="muted">키트를 어떻게 꾸릴지 모르겠다면 <a href="#/kit">키트 추천</a>을 먼저 받아 보세요.</p></section>' +
@@ -185,8 +188,12 @@
 
     $('#d-start').addEventListener('change', onDates);
     $('#d-end').addEventListener('change', onDates);
+    $('#d-slot').addEventListener('change', function () { S.slot = this.value; });
     $('#gear-form').addEventListener('submit', onSubmit);
     $('#items').addEventListener('click', onStep);
+    $('#items').addEventListener('change', onQtyInput);
+    $('#items').addEventListener('keydown', function (ev) { if (ev.target.classList && ev.target.classList.contains('qty') && ev.key === 'Enter') { ev.preventDefault(); ev.target.blur(); } });
+    $('#items').addEventListener('focusin', function (ev) { if (ev.target.classList && ev.target.classList.contains('qty')) ev.target.select(); });
     if (S.start && S.end) refreshAvail(); else updateCart();
   };
   function chk(k, t) { return '<label class="check"><input type="checkbox" data-consent="' + k + '"> <span>' + esc(t) + '</span></label>'; }
@@ -247,7 +254,7 @@
           '<div><div class="nm">' + esc(it.name) + '</div>' + note +
           gaugeHtml(a.remaining, a.stock, q) +
           '<div class="left">' + (off ? '<span>이 기간에는 남은 수량이 없어요</span>' : '<span>남은 <b>' + a.remaining + '</b>개</span><span>한 번에 최대 ' + (it.max || it.stock) + '개</span>') + '</div></div>' +
-          '<div class="step" role="group" aria-label="' + esc(it.name) + ' 수량"><button type="button" data-act="dec" data-id="' + it.id + '"' + (q <= minQ ? ' disabled' : '') + ' aria-label="줄이기">−</button><output id="q-' + it.id + '" aria-live="polite">' + q + '</output><button type="button" data-act="inc" data-id="' + it.id + '"' + (q >= mx ? ' disabled' : '') + ' aria-label="늘리기">+</button></div></div>';
+          '<div class="step" role="group" aria-label="' + esc(it.name) + ' 수량"><button type="button" data-act="dec" data-id="' + it.id + '"' + (q <= minQ ? ' disabled' : '') + ' aria-label="줄이기">−</button><input class="qty" id="q-' + it.id + '" data-id="' + it.id + '" type="text" inputmode="numeric" autocomplete="off" aria-label="' + esc(it.name) + ' 수량 직접 입력" value="' + q + '"' + (off ? ' disabled' : '') + '><button type="button" data-act="inc" data-id="' + it.id + '"' + (q >= mx ? ' disabled' : '') + ' aria-label="늘리기">+</button></div></div>';
       }).join('') + '</div>';
     }).join('');
   }
@@ -260,20 +267,30 @@
     ensureVest(); renderItems(); updateCart();
     var again = $('[data-act="' + btn.getAttribute('data-act') + '"][data-id="' + id + '"]'); if (again && !again.disabled) again.focus();
   }
+  // 수량 칸에 직접 입력: 숫자만 받고, 남은 수량·한 번에 최대 수량·조끼 최소 수량 안으로 맞춘다.
+  function onQtyInput(ev) {
+    var inp = ev.target.closest ? ev.target.closest('input.qty') : null; if (!inp) return;
+    var id = inp.getAttribute('data-id'), it = idx()[id], raw = inp.value.replace(/[^0-9]/g, ''), q = raw === '' ? 0 : parseInt(raw, 10), mx = maxFor(it), note = '';
+    if (q > mx) { q = mx; note = shortName(it.name) + '은(는) 이 기간에 최대 ' + mx + '개까지 담을 수 있어요.'; }
+    if (id === 'vest') { var need = Core.requiredVests(S.cart, idx()); if (q < need) { q = need; note = '안전통제 장비를 담았으면 안전 조끼가 최소 ' + need + '개 필요해요.'; } }
+    if (q) S.cart[id] = q; else delete S.cart[id];
+    S.qtyNote = note;
+    ensureVest(); renderItems(); updateCart();
+  }
   function updateCart() {
     var kinds = 0, total = 0;
     for (var id in S.cart) { kinds++; total += S.cart[id]; }
     $('#cart-sum').textContent = kinds ? '선택한 물품 ' + kinds + '종 · ' + total + '개' : '선택한 물품이 없어요';
     var sub = '', rec = Core.recommendedVests(S.cart, idx());
     if (Core.requiredVests(S.cart, idx()) > 0 && (S.cart.vest | 0) < rec) sub = '안전 조끼는 최소 1개가 필수예요. 통제 요원 수만큼 있으면 좋아서 ' + rec + '개를 권장해요.';
-    $('#cart-sub').textContent = sub;
+    $('#cart-sub').textContent = (S.qtyNote ? S.qtyNote + ' ' : '') + sub; S.qtyNote = '';
   }
   function onSubmit(ev) {
     ev.preventDefault();
     var box = $('#submit-msg'), btn = $('#btn-submit');
     var consent = {}; $$('[data-consent]').forEach(function (c) { consent[c.getAttribute('data-consent')] = c.checked; });
     var payload = {
-      startDate: S.start, endDate: S.end, items: Object.assign({}, S.cart),
+      startDate: S.start, endDate: S.end, visitSlot: $('#d-slot').value, items: Object.assign({}, S.cart),
       sigun: $('#f-sigun').value, kind: $('#f-kind').value, staffBand: $('#f-staff').value, consent: consent,
       website: $('#f-website').value, openedAt: S.openedAt
     };
@@ -286,7 +303,7 @@
         box.innerHTML = msg('err', '<strong>예약하지 못했어요</strong>' + list(r.errors || ['잠시 뒤에 다시 시도해 주세요.']));
         btn.disabled = false; btn.textContent = '예약하기'; refreshAvail(); return;
       }
-      saveCode(r.reservation); S.cart = {}; S.start = ''; S.end = '';
+      saveCode(r.reservation); S.cart = {}; S.start = ''; S.end = ''; S.slot = '';
       renderDone(r.reservation);
     }).catch(function () {
       box.innerHTML = msg('err', '서버에 연결하지 못했어요. 예약이 접수됐는지 확실하지 않으니, 잠시 뒤 다시 시도하기 전에 <a href="#/my">내 예약</a>을 확인해 주세요.');
@@ -299,7 +316,7 @@
       '<p><span class="code" id="the-code">' + esc(r.code) + '</span></p>' +
       '<div class="row no-print"><button class="btn sm" id="copy" type="button">코드 복사</button><a class="btn sm alt" href="#/receipt/' + esc(r.code) + '">인수증 미리 채워 인쇄</a><a class="btn sm alt" href="#/my/' + esc(r.code) + '">예약 확인</a></div></div>' +
       '<div class="ticket-tear" aria-hidden="true"></div>' +
-      '<div class="ticket-sub"><dl class="kv"><dt>수령일</dt><dd>' + ko(r.startDate) + '</dd><dt>반납일</dt><dd>' + ko(r.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(r.sigun) + '</dd></dl>' +
+      '<div class="ticket-sub"><dl class="kv"><dt>수령일</dt><dd>' + ko(r.startDate) + '</dd>' + (r.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(r.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(r.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(r.sigun) + '</dd></dl>' +
       itemsTable(r.items) +
       msg('warn', '<strong>코드를 꼭 저장해 두세요.</strong> 이 사이트는 이름·연락처를 받지 않기 때문에 코드를 잃어버리면 예약을 찾을 수 없어요. 화면을 캡처하거나 적어 두세요. (이 기기에도 자동 저장돼요.)') +
       msg('info', '수령일 <strong>다음 날까지</strong> 방문하지 않으면 예약이 자동으로 해제됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') + '</div></article>';
@@ -365,7 +382,8 @@
   views.my = function (parts) {
     app.innerHTML = ph('My reservation', '내 예약 확인', '예약할 때 받은 코드를 입력하세요. 코드가 없으면 예약을_찾을_수_없어요.') +
       '<form id="my-form" class="card" novalidate><div class="field"><label for="my-code">예약코드</label><input type="text" id="my-code" placeholder="GCA-XXXX-XXXX" autocomplete="off" autocapitalize="characters" inputmode="text"></div><button class="btn" type="submit">확인</button></form>' +
-      '<div id="my-out"></div><div id="my-saved"></div>';
+      '<div id="my-out"></div><div id="my-saved"></div>' +
+      '<p class="muted" style="margin-top:22px">' + K('예약 없이 현장에서 빌리는 분을 위한 ') + '<a href="#/receipt/blank">빈 인수증 인쇄</a>' + K('도 있어요.') + '</p>';
     $('#my-form').addEventListener('submit', function (e) { e.preventDefault(); lookup($('#my-code').value); });
     renderSaved();
     if (parts[0]) { $('#my-code').value = parts[0]; lookup(parts[0]); }
@@ -388,9 +406,9 @@
       if (!r.ok) { out.innerHTML = msg('err', esc((r.errors || ['예약을 찾지 못했어요.']).join(' '))); return; }
       var x = r.reservation, can = x.status === '예약됨';
       out.innerHTML = '<div class="card"><h2>' + esc(x.code) + ' ' + statusBadge(x.status) + '</h2>' +
-        '<dl class="kv"><dt>수령일</dt><dd>' + ko(x.startDate) + '</dd><dt>반납일</dt><dd>' + ko(x.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(x.sigun) + '</dd></dl>' + itemsTable(x.items) +
+        '<dl class="kv"><dt>수령일</dt><dd>' + ko(x.startDate) + '</dd>' + (x.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(x.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(x.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(x.sigun) + '</dd></dl>' + itemsTable(x.items) +
         (can ? msg('info', '수령일 다음 날까지 방문하지 않으면 자동으로 해제돼요.') : '') +
-        '<div class="row no-print" style="margin-top:12px">' + ((x.status === '예약됨' || x.status === '수령') ? '<a class="btn sm alt" href="#/receipt/' + esc(x.code) + '">인수증 미리 채워 인쇄</a>' : '') + (can ? '<button class="btn sm danger" id="cancel" type="button">예약 취소</button>' : '') + '</div></div>';
+        '<div class="row no-print" style="margin-top:12px">' + ((x.status === '예약됨' || x.status === '수령' || x.status === '반납') ? '<a class="btn sm alt" href="#/receipt/' + esc(x.code) + '">인수증 미리 채워 인쇄</a>' : '') + (can ? '<button class="btn sm danger" id="cancel" type="button">예약 취소</button>' : '') + '</div></div>';
       var c = $('#cancel');
       if (c) c.addEventListener('click', function () {
         if (!window.confirm('이 예약을 취소할까요? 취소하면 되돌릴 수 없어요.')) return;
@@ -400,39 +418,51 @@
   }
 
   /* ---------- 인수증 (개인정보 칸은 비워 둠) ---------- */
+  // #/receipt/예약코드 : 예약 내용이 미리 채워진 인수증 / #/receipt/blank : 예약 없이 빌리는 분을 위한 빈 인수증(현장·관리자용)
+  function receiptHtml(x) {
+    var q = {}, safety = items().filter(function (i) { return i.category === '안전통제'; }), film = items().filter(function (i) { return i.category !== '안전통제'; });
+    if (x) x.items.forEach(function (i) { q[i.id] = i.qty; });
+    var n = Math.max(safety.length, film.length), rows = '';
+    for (var i = 0; i < n; i++) {
+      var a = safety[i], b = film[i];
+      rows += '<tr><td colspan="2">' + (a ? esc(a.name) : '') + '</td><td class="c">' + (a && q[a.id] ? q[a.id] : '') + '</td><td colspan="2">' + (b ? esc(b.name) : '') + '</td><td class="c">' + (b && q[b.id] ? q[b.id] : '') + '</td></tr>';
+    }
+    var blankDate = '20&nbsp;&nbsp;&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;일';
+    return '<div class="receipt"><h2>촬영현장지원 물품 인수증</h2>' +
+      '<table><tr><th colspan="6">인수자</th></tr>' +
+      '<tr class="tall"><th>제작사(팀)</th><td colspan="5" class="blank"></td></tr><tr class="tall"><th>영상물 제목</th><td colspan="5" class="blank"></td></tr>' +
+      '<tr class="tall"><th>연락처</th><td colspan="5" class="blank"></td></tr>' +
+      '<tr><th colspan="6">인수 물품</th></tr><tr><th colspan="3">안전 통제 장비</th><th colspan="3">촬영 장비</th></tr>' +
+      '<tr><th colspan="2">물품</th><th>개수</th><th colspan="2">물품</th><th>개수</th></tr>' + rows +
+      '<tr><th>사용장소</th><td colspan="5">' + (x ? esc(x.sigun) : '') + '</td></tr>' +
+      '<tr><th>사용기간</th><td colspan="5">' + (x ? ko(x.startDate) + ' ~ ' + ko(x.endDate) : '20&nbsp;&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;~&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;일') + '</td></tr>' +
+      '<tr><th>반납일</th><td colspan="2">' + (x ? ko(x.endDate) : '&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;일') + '</td><th>수령 방문</th><td colspan="2">' + (x && x.visitSlot ? esc(x.visitSlot) : '') + '</td></tr>' +
+      '<tr><th>예약코드</th><td colspan="5">' + (x ? esc(x.code) : '') + '</td></tr></table>' +
+      '<div class="fine"><p>▸ 상기 물품을 사용기간 내 사용 후, 반납 일자에 경기콘텐츠진흥원 담당자에게 직접 반납해야 함. (택배, 퀵 서비스, 우편 반납 불가)</p>' +
+      '<p>▸ 물품사용 및 운송 중 파손, 망실될 경우 제작사(팀)에서 동일 제품으로 변상해야 함.</p>' +
+      '<p>▸ <strong><u>안전통제장비 대여 시 안전조끼 필수 대여</u></strong>하며, 상기 대여 물품과 함께 반납해야 함.</p>' +
+      '<p><strong>본인은 대여 물품의 수량과 상태가 이상 없음을 확인하였으며, 상기와 같은 조건에 동의합니다.</strong></p>' +
+      '<p><strong>경기콘텐츠진흥원의 촬영현장지원 물품대여를 요청합니다.</strong></p></div>' +
+      '<p class="rdate">' + blankDate + '</p>' +
+      '<table class="sign"><tr><th>대여자 성명</th><th>진흥원 담당자 성명</th><th>인수자 성명</th></tr>' +
+      '<tr><td><span>(서명 또는 인)</span></td><td><span>(서명 또는 인)</span></td><td><span>(서명 또는 인)</span></td></tr></table></div>';
+  }
   views.receipt = function (parts) {
-    app.innerHTML = '<p class="loading">인수증을 만드는 중…</p>';
-    S.api.lookup(parts[0] || '').then(function (r) {
-      if (!r.ok) { app.innerHTML = msg('err', esc((r.errors || ['예약을 찾지 못했어요.']).join(' '))) + '<p><a href="#/my">내 예약으로 돌아가기</a></p>'; return; }
-      var x = r.reservation, q = {};
-      if (x.status !== '예약됨' && x.status !== '수령') { app.innerHTML = msg('warn', '이 예약은 ' + esc(x.status) + ' 상태라 인수증을 만들 수 없어요.') + '<p><a href="#/my/' + esc(x.code) + '">내 예약으로 돌아가기</a></p>'; return; }
-      x.items.forEach(function (i) { q[i.id] = i.qty; });
-      var safety = items().filter(function (i) { return i.category === '안전통제'; }), film = items().filter(function (i) { return i.category !== '안전통제'; });
-      var n = Math.max(safety.length, film.length), rows = '';
-      for (var i = 0; i < n; i++) {
-        var a = safety[i], b = film[i];
-        rows += '<tr><td colspan="2">' + (a ? esc(a.name) : '') + '</td><td style="text-align:center">' + (a && q[a.id] ? q[a.id] : '') + '</td><td colspan="2">' + (b ? esc(b.name) : '') + '</td><td style="text-align:center">' + (b && q[b.id] ? q[b.id] : '') + '</td></tr>';
-      }
-      app.innerHTML = '<div class="no-print row" style="margin-bottom:14px"><button class="btn" id="do-print" type="button">인쇄하기</button><a class="btn alt" href="#/my/' + esc(x.code) + '">돌아가기</a></div>' +
-        msg('info', '<span class="no-print">이름·연락처·제작사·영상물 제목·서명은 일부러 비워 두었어요. 수령할 때 현장에서 직접 적어 주세요.</span>').replace('class="msg info"', 'class="msg info no-print"') +
-        '<div class="receipt"><h2>촬영현장지원 물품 인수증</h2>' +
-        '<table><tr><th colspan="6">인수자</th></tr>' +
-        '<tr><th>제작사(팀)</th><td colspan="5" class="blank"></td></tr><tr><th>영상물 제목</th><td colspan="5" class="blank"></td></tr>' +
-        '<tr><th>성 명</th><td colspan="2" class="blank"></td><th>연락처</th><td colspan="2" class="blank"></td></tr>' +
-        '<tr><th colspan="6">인수 물품</th></tr><tr><th colspan="3">안전 통제 장비</th><th colspan="3">촬영 장비</th></tr>' +
-        '<tr><th colspan="2">물품</th><th>개수</th><th colspan="2">물품</th><th>개수</th></tr>' + rows +
-        '<tr><th>사용장소</th><td colspan="5">' + esc(x.sigun) + '</td></tr>' +
-        '<tr><th>사용기간</th><td colspan="5">' + ko(x.startDate) + ' ~ ' + ko(x.endDate) + '</td></tr>' +
-        '<tr><th>반납일</th><td colspan="3">' + ko(x.endDate) + '</td><th>진흥원 담당자</th><td class="blank"></td></tr>' +
-        '<tr><th>예약코드</th><td colspan="5">' + esc(x.code) + '</td></tr></table>' +
-        '<div class="fine"><p>▸ 상기 물품을 사용기간 내 사용 후, 반납 일자에 경기콘텐츠진흥원 담당자에게 직접 반납해야 함. (택배, 퀵 서비스, 우편 반납 불가)</p>' +
-        '<p>▸ 물품사용 및 운송 중 파손, 망실될 경우 제작사(팀)에서 동일 제품으로 변상해야 함.</p>' +
-        '<p>▸ <strong><u>안전통제장비 대여 시 안전조끼 필수 대여</u></strong>하며, 상기 대여 물품과 함께 반납해야 함.</p>' +
-        '<p><strong>본인은 대여 물품의 수량과 상태가 이상 없음을 확인하였으며, 상기와 같은 조건에 동의합니다.</strong></p>' +
-        '<p><strong>경기콘텐츠진흥원의 촬영현장지원 물품대여를 요청합니다.</strong></p>' +
-        '<p style="text-align:center;margin-top:18px">20&nbsp;&nbsp;&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;일</p><p style="text-align:right">인수자 :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(인)</p></div></div>';
+    var code = parts[0] || '', toolbar = function (back) {
+      return '<div class="no-print row" style="margin-bottom:14px"><button class="btn" id="do-print" type="button">인쇄하기</button><a class="btn alt" href="' + back + '">돌아가기</a></div>';
+    }, hint = msg('info', '이름·연락처·제작사·영상물 제목·성명·서명은 일부러 비워 두었어요. 현장에서 직접 적어 주세요.').replace('class="msg info"', 'class="msg info no-print"');
+    function show(x, back) {
+      app.innerHTML = toolbar(back) + hint + receiptHtml(x);
       $('#do-print').addEventListener('click', function () { window.print(); });
-    });
+    }
+    if (!code || code.toLowerCase() === 'blank') { show(null, '#/my'); return; }
+    app.innerHTML = '<p class="loading">인수증을 만드는 중…</p>';
+    S.api.lookup(code).then(function (r) {
+      if (!r.ok) { app.innerHTML = msg('err', esc((r.errors || ['예약을 찾지 못했어요.']).join(' '))) + '<p><a href="#/my">내 예약으로 돌아가기</a></p>'; return; }
+      var x = r.reservation;
+      if (x.status === '해제' || x.status === '취소') { app.innerHTML = msg('warn', '이 예약은 ' + esc(x.status) + ' 상태라 인수증을 만들 수 없어요.') + '<p><a href="#/my/' + esc(x.code) + '">내 예약으로 돌아가기</a></p>'; return; }
+      show(x, '#/my/' + encodeURIComponent(x.code));
+    }).catch(function () { app.innerHTML = msg('err', '서버에 연결하지 못했어요. 잠시 뒤에 다시 시도해 주세요.'); });
   };
 
   /* ---------- 촬영 준비 ---------- */

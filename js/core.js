@@ -11,6 +11,7 @@ var Core = (function () {
   var SIGUN = ['수원시', '성남시', '의정부시', '안양시', '부천시', '광명시', '평택시', '동두천시', '안산시', '고양시', '과천시', '구리시', '남양주시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '용인시', '파주시', '이천시', '안성시', '김포시', '화성시', '광주시', '양주시', '포천시', '여주시', '연천군', '가평군', '양평군'];
   var KINDS = ['극영화/단편', '극영화/독립장편', '극영화/상업장편', 'TV/OTT 드라마', 'TV/OTT 예능/교양', '다큐멘터리', '뮤직비디오', '광고/PR영상', '기타 숏폼 영상', '기타(뉴스,화보 등)'];
   var STAFF_BANDS = ['9명 이하', '10~29명', '30~59명', '60~99명', '100명 이상'];
+  var VISIT_SLOTS = ['10:00~11:00', '11:00~12:00', '12:00~13:00', '13:00~14:00', '14:00~15:00', '15:00~16:00', '16:00~17:00']; // 수령 방문은 10시~17시만
   var CONSENTS = ['visitOnly', 'damage', 'vest', 'noPersonalInfo'];
   var DAY_MS = 86400000;
 
@@ -147,6 +148,7 @@ var Core = (function () {
       if (needVest > 0 && (cart.vest | 0) < needVest) errors.push('안전통제 장비를 빌리면 안전 조끼를 ' + needVest + '개 이상 함께 빌려야 해요.');
     }
 
+    if (VISIT_SLOTS.indexOf(p.visitSlot) < 0) errors.push('수령하러 올 시간대를 선택해 주세요. (10시~17시)');
     if (SIGUN.indexOf(p.sigun) < 0) errors.push('촬영 시군을 선택해 주세요. (경기도 안에서 촬영할 때만 대여할 수 있어요.)');
     if (KINDS.indexOf(p.kind) < 0) errors.push('촬영 종류를 선택해 주세요.');
     if (p.staffBand && STAFF_BANDS.indexOf(p.staffBand) < 0) errors.push('스탭 규모 선택이 올바르지 않아요.');
@@ -172,7 +174,7 @@ var Core = (function () {
       reservation: {
         code: code, status: '예약됨', createdAt: ctx.nowISO,
         startDate: p.startDate, endDate: p.endDate, items: v.cart,
-        sigun: p.sigun, kind: p.kind, staffBand: p.staffBand || ''
+        sigun: p.sigun, kind: p.kind, staffBand: p.staffBand || '', visitSlot: p.visitSlot
       }
     };
   }
@@ -181,11 +183,11 @@ var Core = (function () {
   function publicView(r, items) {
     var idx = byId(items), list = [];
     for (var id in r.items) list.push({ id: id, name: idx[id] ? idx[id].name : id, category: idx[id] ? idx[id].category : '', qty: r.items[id] });
-    return { code: r.code, status: r.status, startDate: r.startDate, endDate: r.endDate, sigun: r.sigun, kind: r.kind, items: list };
+    return { code: r.code, status: r.status, startDate: r.startDate, endDate: r.endDate, visitSlot: r.visitSlot || '', sigun: r.sigun, kind: r.kind, items: list };
   }
 
   return {
-    SIGUN: SIGUN, KINDS: KINDS, STAFF_BANDS: STAFF_BANDS, ACTIVE: ACTIVE,
+    SIGUN: SIGUN, KINDS: KINDS, STAFF_BANDS: STAFF_BANDS, VISIT_SLOTS: VISIT_SLOTS, ACTIVE: ACTIVE,
     todayKST: todayKST, parseDate: parseDate, addDays: addDays, diffDays: diffDays, isWeekday: isWeekday, isClosed: isClosed, eachDay: eachDay,
     makeCode: makeCode, normalizeCode: normalizeCode,
     availability: availability, byId: byId, requiredVests: requiredVests, recommendedVests: recommendedVests,

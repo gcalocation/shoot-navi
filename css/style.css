@@ -141,6 +141,10 @@ main { padding-top: 38px; padding-bottom: 60px; min-height: 60vh; outline: none;
 .stock-row .gauge { grid-column: 1 / -1; }
 .stock-row .v { font-weight: 800; font-size: 1.05rem; }
 .stock-row .v small { color: var(--muted); font-weight: 400; font-size: .82rem; }
+.more { margin-top: 20px; padding-top: 16px; border-top: 2px dashed var(--line); }
+.more-h { margin: 0 0 10px; font-size: .88rem; color: var(--muted); }
+.more-h b { color: var(--ink); font-weight: 800; }
+.tag b { color: var(--ink); font-weight: 800; }
 .sheet-f { margin: 18px 0 0; padding-top: 14px; border-top: 2px dashed var(--line); font-size: .88rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .gauge { height: 11px; border-radius: 999px; box-shadow: var(--press-sm); padding: 2px; }
 .gauge > i { display: block; height: 100%; width: var(--p, 0%); border-radius: 999px; --rest: var(--teal); background: linear-gradient(90deg, var(--cone-g) 0, var(--cone-g) calc(var(--q, 0) / var(--r, 1) * 100%), var(--rest) calc(var(--q, 0) / var(--r, 1) * 100%)); min-width: 7px; }
@@ -232,6 +236,9 @@ summary { cursor: pointer; font-weight: 700; color: var(--teal); padding: 6px 0;
 .step button:hover:not([disabled]) { color: var(--teal); }
 .step button:active:not([disabled]) { box-shadow: var(--press-sm); }
 .step button[disabled] { opacity: .35; cursor: not-allowed; box-shadow: none; }
+.step input.qty { width: 3.5rem; min-width: 0; min-height: 40px; text-align: center; border: 0; border-radius: 12px; background: transparent; box-shadow: none; color: var(--ink); font: 800 1.15rem/1 var(--f); padding: 0 2px; font-variant-numeric: tabular-nums; }
+.step input.qty:focus { outline: 3px solid var(--teal); outline-offset: 0; border: 0; }
+.step input.qty:disabled { opacity: .5; }
 .step output { min-width: 40px; text-align: center; font-weight: 800; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
 .badge { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; color: var(--teal); box-shadow: var(--press-sm); vertical-align: middle; white-space: nowrap; line-height: 1.6; }
 .badge.ok { color: var(--ok); } .badge.warn { color: var(--warn); } .badge.bad { color: var(--bad); }
@@ -315,8 +322,21 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
 .receipt table { font-size: 14px; } .receipt th, .receipt td { border: 1px solid #555; padding: 6px 8px; color: #000; }
 .receipt th { background: #eee; text-align: center; font-size: 14px; }
 .receipt .blank { height: 34px; }
+.receipt td.c { text-align: center; }
+.receipt tr.tall th, .receipt tr.tall td { height: 58px; }
+.receipt .rdate { text-align: center; margin: 18px 0 10px; font-size: 14px; }
+.receipt table.sign { table-layout: fixed; margin-top: 4px; }
+.receipt table.sign th { padding: 9px 8px; }
+.receipt table.sign td { height: 120px; vertical-align: bottom; text-align: right; padding: 8px 12px; }
+.receipt table.sign td span { font-size: 11px; color: #666; }
 .receipt .fine { font-size: 12.5px; margin-top: 10px; }
+@page { size: A4; margin: 10mm; }
 @media print {
+  .receipt { font-size: 12.5px; line-height: 1.4; }
+  .receipt table, .receipt th { font-size: 12.5px; }
+  .receipt th, .receipt td { padding: 4px 7px; }
+  .receipt tr.tall th, .receipt tr.tall td { height: 50px; }
+  .receipt table.sign td { height: 100px; }
   .top, .foot, .notice, .no-print, .skip, .tabbar { display: none !important; }
   body { background: #fff; padding: 0; } main { padding: 0; }
   .receipt { border: none; padding: 0; max-width: none; box-shadow: none; border-radius: 0; }
@@ -338,3 +358,7 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
   .card, .plate, .sheet, .ticket, .pcard, .linkrow, .btn, .well, .step, .badge, .tag, .seg label, .nav, .tabs, .subnav, .tabbar, .cartbar, .notice, .msg, .foot-box, .gauge, input, select { border: 1px solid CanvasText; box-shadow: none; }
   .gauge > i, .bar .fill, .col .fill { background: Highlight; forced-color-adjust: none; }
 }
+
+/* 화면을 바꿀 때 본문 영역(main)에 프로그램이 포커스를 옮기는데, 이때 키보드용 파란 테두리가 잠깐 나타나던 것을 막는다.
+   본문 영역은 누르거나 입력하는 요소가 아니라 테두리가 필요 없다(버튼·링크·입력칸의 포커스 표시는 그대로). */
+#app:focus, #app:focus-visible { outline: none; }

@@ -321,7 +321,9 @@
       '<div class="ticket-sub"><dl class="kv"><dt>수령일</dt><dd>' + ko(r.startDate) + '</dd>' + (r.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(r.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(r.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(r.sigun) + '</dd></dl>' +
       itemsTable(r.items) +
       msg('warn', '<strong>코드를 꼭 저장해 두세요.</strong> 이 사이트는 이름·연락처를 받지 않기 때문에 코드를 잃어버리면 예약을 찾을 수 없어요. 화면을 캡처하거나 적어 두세요. (이 기기에도 자동 저장돼요.)') +
-      msg('info', '수령일 <strong>당일</strong>에 방문하지 않으면 예약이 자동으로 취소됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') + '</div></article>';
+      msg('info', '수령일 <strong>당일</strong>에 방문하지 않으면 예약이 자동으로 취소됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') +
+      msg('info', '반납기한은 <strong>1회 연장</strong>할 수 있어요. (최대 14일 추가)') +
+      '<div class="contact"><p class="contact-h">예약 확인 및 관련 문의</p><p>영상산업팀 이성현 매니저 <a href="tel:0326238083">032-623-8083</a></p></div></div></article>';
     $('#copy').addEventListener('click', function () {
       var b = this, done = function () { b.textContent = '복사했어요'; };
       if (navigator.clipboard) navigator.clipboard.writeText(r.code).then(done, done); else done();

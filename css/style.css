@@ -366,3 +366,7 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
 #app:focus, #app:focus-visible { outline: none; }
 
 main#app:focus, main#app:focus-visible, main#app:focus-within { outline: 0 !important; box-shadow: none; }
+.contact { margin-top: 16px; padding: 14px 16px; border-radius: var(--r-s); box-shadow: var(--press-sm); }
+.contact p { margin: 0; }
+.contact-h { font-weight: 800; margin-bottom: 4px !important; }
+.contact a { font-weight: 800; }

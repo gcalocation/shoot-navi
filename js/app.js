@@ -312,6 +312,11 @@
       btn.disabled = false; btn.textContent = '예약하기';
     });
   }
+  // 예약 완료·내 예약 화면에 공통으로 붙는 안내(반납 연장, 문의처)
+  function helpHtml() {
+    return msg('info', '반납기한은 <strong>1회 연장</strong>할 수 있어요. (최대 14일 추가)') +
+      '<div class="contact"><p class="contact-h">예약 확인 및 관련 문의</p><p>영상산업팀 이성현 매니저 <a href="tel:0326238083">032-623-8083</a></p></div>';
+  }
   function renderDone(r) {
     app.innerHTML =
       '<article class="ticket"><div class="ticket-main"><p class="eyebrow">Reservation</p><h1>예약이 접수됐어요</h1><p class="lede" style="margin-bottom:18px">수령일에 이 예약코드를 진흥원에서 보여 주세요.</p>' +
@@ -321,9 +326,7 @@
       '<div class="ticket-sub"><dl class="kv"><dt>수령일</dt><dd>' + ko(r.startDate) + '</dd>' + (r.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(r.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(r.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(r.sigun) + '</dd></dl>' +
       itemsTable(r.items) +
       msg('warn', '<strong>코드를 꼭 저장해 두세요.</strong> 이 사이트는 이름·연락처를 받지 않기 때문에 코드를 잃어버리면 예약을 찾을 수 없어요. 화면을 캡처하거나 적어 두세요. (이 기기에도 자동 저장돼요.)') +
-      msg('info', '수령일 <strong>당일</strong>에 방문하지 않으면 예약이 자동으로 취소됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') +
-      msg('info', '반납기한은 <strong>1회 연장</strong>할 수 있어요. (최대 14일 추가)') +
-      '<div class="contact"><p class="contact-h">예약 확인 및 관련 문의</p><p>영상산업팀 이성현 매니저 <a href="tel:0326238083">032-623-8083</a></p></div></div></article>';
+      msg('info', '수령일 <strong>당일</strong>에 방문하지 않으면 예약이 자동으로 취소됩니다. 일정이 바뀌면 <a href="#/my/' + esc(r.code) + '">내 예약</a>에서 취소해 주세요.') + helpHtml() + '</div></article>';
     $('#copy').addEventListener('click', function () {
       var b = this, done = function () { b.textContent = '복사했어요'; };
       if (navigator.clipboard) navigator.clipboard.writeText(r.code).then(done, done); else done();
@@ -411,7 +414,7 @@
       var x = r.reservation, can = x.status === '예약됨';
       out.innerHTML = '<div class="card"><h2>' + esc(x.code) + ' ' + statusBadge(x.status) + '</h2>' +
         '<dl class="kv"><dt>수령일</dt><dd>' + ko(x.startDate) + '</dd>' + (x.visitSlot ? '<dt>방문 시간</dt><dd>' + esc(x.visitSlot) + '</dd>' : '') + '<dt>반납일</dt><dd>' + ko(x.endDate) + '</dd><dt>촬영 시군</dt><dd>' + esc(x.sigun) + '</dd></dl>' + itemsTable(x.items) +
-        (can ? msg('info', '수령일 당일에 방문하지 않으면 자동으로 취소돼요.') : '') +
+        (can ? msg('info', '수령일 당일에 방문하지 않으면 자동으로 취소돼요.') : '') + helpHtml() +
         '<div class="row no-print" style="margin-top:12px">' + ((x.status === '예약됨' || x.status === '수령' || x.status === '반납') ? '<a class="btn sm alt" href="#/receipt/' + esc(x.code) + '">인수증 미리 채워 인쇄</a>' : '') + (can ? '<button class="btn sm danger" id="cancel" type="button">예약 취소</button>' : '') + '</div></div>';
       var c = $('#cancel');
       if (c) c.addEventListener('click', function () {

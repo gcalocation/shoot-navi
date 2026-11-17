@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>촬영지원 관리</title>
+<style>
+:root { color-scheme: light; }
+body { font-family: "Malgun Gothic", "Noto Sans KR", sans-serif; margin: 0; background: #f4f5f7; color: #1c2330; font-size: 15px; }
+header { background: #1c2330; color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header h1 { margin: 0; font-size: 18px; }
+header .sub { font-size: 12px; opacity: .75; margin-top: 4px; }
+main { padding: 14px; max-width: 1000px; margin: 0 auto; }
+section { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+h2 { font-size: 16px; margin: 0 0 10px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 6px; border-bottom: 1px solid #e6e8ec; text-align: left; vertical-align: middle; }
+th { font-size: 12px; color: #5a6270; font-weight: 700; }
+td.num { text-align: center; }
+.cat { font-size: 12px; color: #7a8190; }
+.zero { color: #c0392b; font-weight: 700; }
+tr.off td { color: #9aa1ad; }
+input[type=number] { width: 72px; padding: 6px; font-size: 15px; border: 1px solid #c9ced6; border-radius: 6px; }
+input[type=text], input[type=password] { padding: 9px; font-size: 16px; border: 1px solid #c9ced6; border-radius: 6px; width: 260px; max-width: 100%; box-sizing: border-box; }
+button { padding: 8px 12px; font-size: 14px; border: 0; border-radius: 6px; background: #2d6cdf; color: #fff; cursor: pointer; margin: 2px; }
+button.ghost { background: #e6e8ec; color: #1c2330; }
+button.warn { background: #c0392b; }
+button.out { background: transparent; border: 1px solid #fff; color: #fff; }
+.res { border-bottom: 1px solid #e6e8ec; padding: 10px 0; }
+.code { font-weight: 700; font-family: Consolas, monospace; }
+.tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #e6e8ec; margin-left: 6px; }
+.tag.go { background: #d4f4dd; }
+.msg { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1c2330; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; max-width: 90vw; z-index: 5; }
+a { color: #2d6cdf; }
+#login { max-width: 360px; margin: 60px auto; }
+#login p { margin: 0 0 12px; }
+.err { color: #c0392b; min-height: 1.4em; margin-top: 8px; }
+@media (max-width: 600px) { th:nth-child(3), td:nth-child(3) { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>촬영지원 관리</h1><div class="sub" id="who"></div></div>
+  <button class="out" id="logout" type="button" hidden>나가기</button>
+</header>
+
+<main id="login-wrap">
+  <section id="login">
+    <h2>관리자 확인</h2>
+    <p>담당자만 들어올 수 있어요. 관리자 PIN을 입력해 주세요.</p>
+    <form id="login-form" autocomplete="off">
+      <input type="password" id="pin" placeholder="관리자 PIN" autocomplete="current-password" required>
+      <button type="submit">들어가기</button>
+    </form>
+    <div class="err" id="login-err" role="alert"></div>
+  </section>
+</main>
+
+<main id="panel" hidden>
+  <section>
+    <h2>물품 재고</h2>
+    <table><thead><tr><th>물품</th><th>보유 수량</th><th>나가 있음</th><th>남은 수</th><th>사용</th></tr></thead><tbody id="items"></tbody></table>
+    <p class="cat">보유 수량을 바꾸면 바로 반영됩니다. &lsquo;나가 있음&rsquo;은 수령 중인 예약의 수량 합계입니다.</p>
+  </section>
+  <section>
+    <h2>예약 처리</h2>
+    <input type="text" id="q" placeholder="예약코드로 찾기 (예: GCA-7K4Q-2M8P)">
+    <div id="res" style="margin-top:8px"></div>
+  </section>
+</main>
+<div class="msg" id="msg"></div>
+
+<script>
+(function () {
+  'use strict';
+  var API = '', PIN = '', S = null;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(t) { var m = $('msg'); m.textContent = t; m.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(function () { m.style.display = 'none'; }, 2400); }
+  function store(v) { try { if (v) sessionStorage.setItem('gcon_admin_pin', v); else sessionStorage.removeItem('gcon_admin_pin'); } catch (e) { /* 무시 */ } }
+  function saved() { try { return sessionStorage.getItem('gcon_admin_pin') || ''; } catch (e) { return ''; } }
+
+  function post(body) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), redirect: 'follow' }).then(function (r) { return r.json(); });
+  }
+  function call(op, extra) { return post(Object.assign({ action: 'admin', pin: PIN, op: op }, extra || {})); }
+  function problem(r) { return (r && r.errors && r.errors.join(' ')) || '서버에 연결하지 못했어요.'; }
+
+  function showLogin(msg) {
+    PIN = ''; store('');
+    $('panel').hidden = true; $('login-wrap').hidden = false; $('logout').hidden = true; $('who').textContent = '';
+    $('login-err').textContent = msg || '';
+  }
+
+  function load(first) {
+    return call('state').then(function (d) {
+      if (!d.ok) { if (first) { showLogin(problem(d)); } else { toast(problem(d)); if (/PIN/.test(problem(d))) showLogin(problem(d)); } return; }
+      store(PIN);
+      $('login-wrap').hidden = true; $('panel').hidden = false; $('logout').hidden = false;
+      render(d);
+    }).catch(function () { if (first) showLogin('서버에 연결하지 못했어요. 잠시 뒤에 다시 시도해 주세요.'); else toast('서버에 연결하지 못했어요.'); });
+  }
+
+  function run(op, extra) {
+    call(op, extra).then(function (r) {
+      if (!r.ok) { toast(problem(r)); if (/PIN/.test(problem(r))) showLogin(problem(r)); return; }
+      toast('처리했어요'); load(false);
+    }).catch(function () { toast('서버에 연결하지 못했어요.'); });
+  }
+
+  function render(d) {
+    S = d;
+    $('who').textContent = '오늘 ' + d.today;
+    $('items').innerHTML = d.items.map(function (i) {
+      var left = i.stock - i.out;
+      return '<tr class="' + (i.active ? '' : 'off') + '">' +
+        '<td>' + esc(i.icon) + ' ' + esc(i.name) + '<div class="cat">' + esc(i.category) + (i.active ? '' : ' · 사용 중지') + '</div></td>' +
+        '<td><input type="number" min="0" max="999" id="s-' + esc(i.id) + '" value="' + i.stock + '"> <button class="ghost" data-act="stock" data-id="' + esc(i.id) + '">저장</button></td>' +
+        '<td class="num">' + i.out + '</td>' +
+        '<td class="num ' + (left <= 0 ? 'zero' : '') + '">' + left + '</td>' +
+        '<td><button class="' + (i.active ? 'ghost' : '') + '" data-act="use" data-id="' + esc(i.id) + '" data-use="' + (i.active ? '0' : '1') + '">' + (i.active ? '사용 중지' : '다시 사용') + '</button></td>' +
+        '</tr>';
+    }).join('');
+    renderRes();
+  }
+
+  function renderRes() {
+    if (!S) return;
+    var q = $('q').value.trim().toUpperCase(), names = {};
+    S.items.forEach(function (i) { names[i.id] = i.name; });
+    var list = S.reservations.filter(function (r) { return !q || r.code.indexOf(q) >= 0; });
+    if (!list.length) { $('res').innerHTML = '<p class="cat">' + (q ? '해당 예약이 없어요.' : '처리할 예약이 없어요.') + '</p>'; return; }
+    $('res').innerHTML = list.map(function (r) {
+      var its = Object.keys(r.items).map(function (id) { return (names[id] || id) + ' ' + r.items[id]; }).join(', ');
+      var tag = r.status === '수령' ? '<span class="tag go">수령 중</span>' : '<span class="tag">예약됨</span>';
+      var c = esc(r.code);
+      var btn = r.status === '예약됨'
+        ? '<button data-act="st" data-code="' + c + '" data-to="수령">방문 수령 처리</button><button class="warn" data-act="st" data-code="' + c + '" data-to="취소">취소</button>'
+        : '<button data-act="st" data-code="' + c + '" data-to="반납">반납 처리</button>';
+      return '<div class="res"><div><span class="code">' + c + '</span>' + tag + '</div>' +
+        '<div class="cat">수령 ' + esc(r.startDate) + (r.visitSlot ? ' ' + esc(r.visitSlot) : '') + ' · 반납 ' + esc(r.endDate) + ' · ' + esc(r.sigun) + ' / ' + esc(r.kind) + '</div>' +
+        '<div>' + esc(its) + '</div>' +
+        '<div style="margin-top:6px">' + btn + ' <a href="./#/receipt/' + c + '" target="_blank" rel="noopener">인수증 보기</a></div></div>';
+    }).join('');
+  }
+
+  $('q').addEventListener('input', renderRes);
+  $('logout').addEventListener('click', function () { showLogin(''); });
+  $('login-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    PIN = $('pin').value; $('pin').value = ''; $('login-err').textContent = '확인하는 중…';
+    load(true);
+  });
+  document.body.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button') : null;
+    if (!b) return;
+    var act = b.getAttribute('data-act');
+    if (act === 'stock') run('stock', { id: b.getAttribute('data-id'), value: $('s-' + b.getAttribute('data-id')).value });
+    if (act === 'use') run('use', { id: b.getAttribute('data-id'), use: b.getAttribute('data-use') === '1' });
+    if (act === 'st') {
+      var to = b.getAttribute('data-to');
+      // 취소는 한 번 더 눌러야 실제로 취소된다(잘못 누르는 것 방지)
+      if (to === '취소' && !b.getAttribute('data-armed')) { b.setAttribute('data-armed', '1'); b.textContent = '한 번 더 누르면 취소'; return; }
+      run('status', { code: b.getAttribute('data-code'), status: to });
+    }
+  });
+
+  fetch('data/config.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (c) {
+    API = c.apiUrl || '';
+    if (!API) { showLogin('서버 주소가 설정되지 않았어요.'); return; }
+    var p = saved();
+    if (p) { PIN = p; load(true); }
+  }).catch(function () { showLogin('설정을 불러오지 못했어요.'); });
+})();
+</script>
+</body>
+</html>

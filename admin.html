@@ -40,6 +40,10 @@ button.out { background: transparent; border: 1px solid #fff; color: #fff; }
 .bar i { display: block; height: 10px; border-radius: 5px; background: #2d6cdf; min-width: 2px; }
 .bar em { font-style: normal; text-align: right; }
 @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+input[type=date] { padding: 6px; font-size: 15px; border: 1px solid #c9ced6; border-radius: 6px; }
+.range { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: 16px 0 8px; padding-top: 14px; border-top: 1px solid #e6e8ec; }
+.range strong { margin-right: 4px; }
+.bars.scroll { max-height: 320px; overflow: auto; padding-right: 6px; }
 .msg { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1c2330; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; max-width: 90vw; z-index: 5; }
 a { color: #2d6cdf; }
 #login { max-width: 360px; margin: 60px auto; }
@@ -71,6 +75,15 @@ a { color: #2d6cdf; }
     <h2>방문 현황</h2>
     <div class="stats" id="vstats"></div>
     <div class="bars" id="vbars"></div>
+    <div class="range">
+      <strong>기간 조회</strong>
+      <input type="date" id="v-from" aria-label="시작일"> ~ <input type="date" id="v-to" aria-label="종료일">
+      <button id="v-go" type="button">조회</button>
+      <button class="ghost" type="button" data-range="month">이번 달</button>
+      <button class="ghost" type="button" data-range="prev">지난 달</button>
+      <button class="ghost" type="button" data-range="30">최근 30일</button>
+    </div>
+    <div id="vrange"></div>
     <p class="cat">같은 브라우저는 하루에 한 번만 셉니다. 사람 수가 아니라 방문한 브라우저 수이며, 개인 정보는 저장하지 않습니다.</p>
   </section>
   <section>
@@ -127,6 +140,7 @@ a { color: #2d6cdf; }
   function render(d) {
     S = d;
     $('who').textContent = '오늘 ' + d.today;
+    if (!$('v-from').value) { $('v-from').value = addDays(d.today, -29); $('v-to').value = d.today; }
     if (d.visits) {
       var v = d.visits, mx = Math.max.apply(null, v.days.map(function (x) { return x.count; }).concat([1]));
       $('vstats').innerHTML = [['오늘', v.today], ['최근 7일', v.last7], ['이번 달', v.month], ['누적', v.total]].map(function (x) { return '<div class="stat"><b>' + x[1] + '</b><span>' + x[0] + '</span></div>'; }).join('');
@@ -143,6 +157,29 @@ a { color: #2d6cdf; }
         '</tr>';
     }).join('');
     renderRes();
+  }
+
+  function addDays(iso, n) { return new Date(Date.parse(iso + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+  function queryVisits() {
+    var a = $('v-from').value, b = $('v-to').value;
+    if (!a || !b) { toast('시작일과 종료일을 골라 주세요.'); return; }
+    $('vrange').innerHTML = '<p class="cat">조회하는 중…</p>';
+    call('visits', { start: a, end: b }).then(function (r) {
+      if (!r.ok) { $('vrange').innerHTML = ''; toast(problem(r)); if (/PIN/.test(problem(r))) showLogin(problem(r)); return; }
+      var n = r.days.length, mx = Math.max.apply(null, r.days.map(function (x) { return x.count; }).concat([1]));
+      var peak = r.days.reduce(function (p, x) { return x.count > p.count ? x : p; }, r.days[0]);
+      var stats = [['합계', r.total], ['일평균', Math.round(r.total / n * 10) / 10], ['가장 많은 날', peak.count ? peak.date.slice(5) + ' · ' + peak.count : '-']];
+      $('vrange').innerHTML = '<p class="cat">' + esc(r.start) + ' ~ ' + esc(r.end) + ' (' + n + '일)</p>' +
+        '<div class="stats" style="grid-template-columns:repeat(3,1fr)">' + stats.map(function (x) { return '<div class="stat"><b>' + esc(x[1]) + '</b><span>' + x[0] + '</span></div>'; }).join('') + '</div>' +
+        '<div class="bars scroll">' + r.days.map(function (x) { return '<div class="bar"><span>' + esc(x.date.slice(2)) + '</span><i style="width:' + Math.round(x.count / mx * 100) + '%"></i><em>' + x.count + '</em></div>'; }).join('') + '</div>';
+    }).catch(function () { $('vrange').innerHTML = ''; toast('서버에 연결하지 못했어요.'); });
+  }
+  function presetRange(kind) {
+    var today = S ? S.today : new Date().toISOString().slice(0, 10), y = +today.slice(0, 4), m = +today.slice(5, 7), a, b;
+    if (kind === 'month') { a = today.slice(0, 8) + '01'; b = today; }
+    else if (kind === 'prev') { a = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 10); b = new Date(Date.UTC(y, m - 1, 0)).toISOString().slice(0, 10); }
+    else { a = addDays(today, -29); b = today; }
+    $('v-from').value = a; $('v-to').value = b; queryVisits();
   }
 
   function renderRes() {
@@ -166,6 +203,8 @@ a { color: #2d6cdf; }
   }
 
   $('q').addEventListener('input', renderRes);
+  $('v-go').addEventListener('click', queryVisits);
+  document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { presetRange(b.getAttribute('data-range')); }); });
   $('logout').addEventListener('click', function () { showLogin(''); });
   $('login-form').addEventListener('submit', function (e) {
     e.preventDefault();

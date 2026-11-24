@@ -589,11 +589,23 @@
   /* ---------- 개인정보·공개 원칙 ---------- */
   views.privacy = function () {
     app.innerHTML = ph('Privacy', '개인정보와 공개 원칙', '이 사이트가 받지 않는 정보와, 통계·장소를 공개하는 기준입니다.') +
-      '<div class="card"><h2>이 사이트는 개인정보를 받지 않습니다</h2><table><thead><tr><th>받는 정보</th><th>받지 않는 정보</th></tr></thead><tbody><tr><td>물품·수량, 수령일·반납일<br>촬영 시군, 촬영 종류, 스탭 규모(선택)<br>규정 확인 체크</td><td>이름, 연락처, 이메일<br>소속, 제작사, 작품명, 영상물 제목<br>주소, 구체적인 촬영 장소<br>자유롭게 쓰는 입력칸 전체<br>로그인, 접속자 추적</td></tr></tbody></table>' +
-      '<p style="margin-top:12px">본인 확인은 수령일에 진흥원을 방문해 <strong>종이 인수증</strong>에 적는 방식으로 합니다. 예약은 코드로만 확인하기 때문에 코드를 잃어버리면 찾을 수 없습니다.</p></div>' +
+      '<div class="card"><h2>이 사이트는 개인정보를 받지 않습니다</h2><table><thead><tr><th>받는 정보</th><th>받지 않는 정보</th></tr></thead><tbody><tr><td>물품·수량, 수령일·반납일<br>방문 횟수(하루 1번, 숫자만)<br>촬영 시군, 촬영 종류, 스탭 규모(선택)<br>규정 확인 체크</td><td>이름, 연락처, 이메일<br>소속, 제작사, 작품명, 영상물 제목<br>주소, 구체적인 촬영 장소<br>자유롭게 쓰는 입력칸 전체<br>로그인, 접속자 추적·식별</td></tr></tbody></table>' +
+      '<p style="margin-top:12px">본인 확인은 수령일에 진흥원을 방문해 <strong>종이 인수증</strong>에 적는 방식으로 합니다. 예약은 코드로만 확인하기 때문에 코드를 잃어버리면 찾을 수 없습니다.</p><p>사이트를 열면 같은 브라우저에서 하루에 한 번 <strong>방문 횟수만 숫자로</strong> 셉니다. 누가 들어왔는지는 알 수 없고, 쿠키나 접속 정보는 저장하지 않습니다.</p></div>' +
       '<div class="card"><h2>로케이션 통계는 이렇게 공개합니다</h2><ul class="clean"><li>촬영지원 신청서 원본은 내부 업무용이며, 이 사이트는 원본에 연결돼 있지 않습니다. 가공·집계가 끝난 파일만 공개합니다.</li><li>작품명, 감독·배우, 제작사, 신청자 정보, 촬영 날짜, 구체 장소는 공개하지 않습니다.</li><li>' + 3 + '건 미만인 항목은 표시하지 않습니다.</li><li>시군은 올해 누적으로, 장소는 유형(도로·학교 등)까지만 보여 드립니다.</li><li>"로케이션 소개"의 구체적인 장소는 통계에서 자동으로 나온 것이 아니라, 담당자가 공개 가능 여부를 확인하고 승인한 곳만 올립니다. 마지막 촬영이 끝난 지 충분히 지난 곳이며, 특정 작품·인물·촬영 시점과 연결되는 내용은 쓰지 않습니다. 사진이 없는 곳은 소개하지 않고, 사진에 담긴 위치·기기 정보는 지웁니다.</li><li>공개 전에 작품명·인명이 섞여 있는지 자동으로 검사합니다.</li></ul></div>' +
       '<div class="card"><h2>알아 두세요</h2><ul class="clean"><li>로케이션 촬영지원 신청서는 이 사이트가 아니라 진흥원의 별도 구글 폼입니다. 담당자가 연락하려면 신청 정보가 필요해서, 신청서에서는 이름·연락처 같은 정보를 받습니다.</li><li>키트 추천은 참고용이며 최종 수량은 수령할 때 담당자가 확인합니다.</li><li>수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다.</li><li>이 사이트를 운영하는 곳: ' + esc(S.cfg.orgName || '') + (S.cfg.contact ? ' · 문의 ' + esc(S.cfg.contact) : '') + '</li></ul></div>';
   };
+
+  /* ---------- 방문 수 ---------- */
+  // 같은 브라우저에서 하루에 한 번만 '방문 1회'를 알린다. 사람을 구분하는 번호는 만들지 않고, 브라우저에는 날짜만 남긴다.
+  function countVisit() {
+    try {
+      if (S.api.demo || !S.api.visit || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+      var today = Core.todayKST(), key = 'gcon_visit_day';
+      if (store.get(key) === today) return;
+      store.set(key, today);
+      S.api.visit().catch(function () { /* 무시 */ });
+    } catch (e) { /* 무시 */ }
+  }
 
   /* ---------- 시작 ---------- */
   Promise.all([json('data/config.json'), json('data/equipment.json'), json('data/rules.json'), json('data/texts.json')]).then(function (a) {
@@ -608,6 +620,7 @@
     $('#foot-org').innerHTML = '<strong>' + esc(S.cfg.orgName || '') + '</strong>이 운영합니다.' + (S.cfg.contact ? ' 문의 ' + esc(S.cfg.contact) : '') + (formUrl() ? ' ' + ext(formUrl(), '로케이션 촬영지원 신청서') : '') + ' ' + ext(fk('home'), '필름코리아');
     window.addEventListener('hashchange', route);
     route();
+    countVisit();
   }).catch(function () {
     app.innerHTML = '<div class="msg err" role="alert">페이지를 불러오지 못했어요. 새로고침해 주세요.</div>';
   });

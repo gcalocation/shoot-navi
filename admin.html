@@ -31,6 +31,15 @@ button.out { background: transparent; border: 1px solid #fff; color: #fff; }
 .code { font-weight: 700; font-family: Consolas, monospace; }
 .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #e6e8ec; margin-left: 6px; }
 .tag.go { background: #d4f4dd; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+.stat { background: #f4f5f7; border-radius: 8px; padding: 10px 12px; }
+.stat b { display: block; font-size: 22px; }
+.stat span { font-size: 12px; color: #5a6270; }
+.bars { display: grid; gap: 4px; }
+.bar { display: grid; grid-template-columns: 70px 1fr 36px; gap: 8px; align-items: center; font-size: 13px; }
+.bar i { display: block; height: 10px; border-radius: 5px; background: #2d6cdf; min-width: 2px; }
+.bar em { font-style: normal; text-align: right; }
+@media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 .msg { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1c2330; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; max-width: 90vw; z-index: 5; }
 a { color: #2d6cdf; }
 #login { max-width: 360px; margin: 60px auto; }
@@ -58,6 +67,12 @@ a { color: #2d6cdf; }
 </main>
 
 <main id="panel" hidden>
+  <section>
+    <h2>방문 현황</h2>
+    <div class="stats" id="vstats"></div>
+    <div class="bars" id="vbars"></div>
+    <p class="cat">같은 브라우저는 하루에 한 번만 셉니다. 사람 수가 아니라 방문한 브라우저 수이며, 개인 정보는 저장하지 않습니다.</p>
+  </section>
   <section>
     <h2>물품 재고</h2>
     <table><thead><tr><th>물품</th><th>보유 수량</th><th>나가 있음</th><th>남은 수</th><th>사용</th></tr></thead><tbody id="items"></tbody></table>
@@ -112,6 +127,11 @@ a { color: #2d6cdf; }
   function render(d) {
     S = d;
     $('who').textContent = '오늘 ' + d.today;
+    if (d.visits) {
+      var v = d.visits, mx = Math.max.apply(null, v.days.map(function (x) { return x.count; }).concat([1]));
+      $('vstats').innerHTML = [['오늘', v.today], ['최근 7일', v.last7], ['이번 달', v.month], ['누적', v.total]].map(function (x) { return '<div class="stat"><b>' + x[1] + '</b><span>' + x[0] + '</span></div>'; }).join('');
+      $('vbars').innerHTML = v.days.map(function (x) { return '<div class="bar"><span>' + esc(x.date.slice(5)) + '</span><i style="width:' + Math.round(x.count / mx * 100) + '%"></i><em>' + x.count + '</em></div>'; }).join('');
+    }
     $('items').innerHTML = d.items.map(function (i) {
       var left = i.stock - i.out;
       return '<tr class="' + (i.active ? '' : 'off') + '">' +

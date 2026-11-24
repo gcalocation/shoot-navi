@@ -65,7 +65,8 @@ var Api = (function () {
         r.status = '취소'; save(list);
         return ok({ ok: true, reservation: Core.publicView(r, master.items) });
       },
-      stats: function () { return ok({ ok: true, items: [] }); }
+      stats: function () { return ok({ ok: true, items: [] }); },
+      visit: function () { return ok({ ok: true }); }
     };
   }
 
@@ -86,7 +87,8 @@ var Api = (function () {
       reserve: function (p) { return post(Object.assign({ action: 'reserve' }, p)); },
       lookup: function (code) { return get({ action: 'lookup', code: code }); },
       cancel: function (code) { return post({ action: 'cancel', code: code }); },
-      stats: function () { return get({ action: 'stats' }); }
+      stats: function () { return get({ action: 'stats' }); },
+      visit: function () { return post({ action: 'visit' }); }
     };
   }
 

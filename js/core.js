@@ -188,10 +188,11 @@ var Core = (function () {
 
   /* ---------- 필름코리아 로케이션(외부 데이터는 항상 걸러서 쓴다) ---------- */
   var FK_IMG = /^https:\/\/filmkorea\.ecn\.cdn\.infralab\.net\/[A-Za-z0-9_\-\/.]+$/;
+  var FK_LOCAL = /^img\/fk\/\d+\.jpg$/;   // GitHub가 줄여서 저장해 둔 썸네일
   var FK_VIEW = /^https:\/\/filmkorea\.or\.kr\/location\/location_view\.jsp\?id=\d+$/;
-  // 이미 걸러진 항목인지 확인(화면 쪽 이중 점검). 사진·상세 주소가 필름코리아 것이 아니면 버린다.
+  // 이미 걸러진 항목인지 확인(화면 쪽 이중 점검). 사진은 우리 썸네일이거나 필름코리아 사진이어야 하고, 상세 주소는 필름코리아 것이어야 한다.
   function fkValid(p) {
-    return !!p && typeof p.name === 'string' && p.name.length > 0 && FK_IMG.test(p.img || '') && FK_VIEW.test(p.url || '');
+    return !!p && typeof p.name === 'string' && p.name.length > 0 && (FK_LOCAL.test(p.img || '') || FK_IMG.test(p.img || '')) && FK_VIEW.test(p.url || '');
   }
   // 유형(대분류)과 지역(시)이 겹치지 않게 n곳을 무작위로 고른다. avoid에 든 id는 가능하면 피한다.
   function fkPick(list, n, avoid, rnd) {

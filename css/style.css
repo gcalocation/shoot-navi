@@ -313,6 +313,12 @@ ul.clean, ol.clean { padding-left: 22px; margin: 6px 0; } ul.clean li, ol.clean 
 .tag { font-size: .78rem; font-weight: 700; color: var(--muted); padding: 2px 11px; border-radius: 999px; box-shadow: var(--press-sm); line-height: 1.7; }
 .pnote { font-size: .86rem; color: var(--ink); margin-top: 4px !important; padding-top: 12px; border-top: 2px dashed var(--line); }
 .pcredit { font-size: .78rem !important; }
+.pcard.fk { display: flex; text-decoration: none; color: inherit; }
+.pcard.fk:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
+.fk-sec .fk-note { margin: 0 4px 14px; }
+.fk-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 4px 18px; }
+.fk-src { margin: 18px 4px 0; font-size: .86rem; }
+.sec-h { margin: 46px 0 16px; font-size: 1.3rem; }
 .subnav { display: inline-flex; gap: 4px; padding: 5px; border-radius: 999px; box-shadow: var(--press-sm); margin: 0 0 30px; }
 .subnav a { padding: 7px 20px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 700; font-size: .92rem; }
 .subnav a[aria-current="page"] { color: var(--teal); background: var(--bg); box-shadow: var(--raise-sm); }

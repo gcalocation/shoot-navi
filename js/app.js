@@ -519,16 +519,63 @@
       (!compact && p.note ? '<p class="pnote"><strong>촬영 참고</strong> ' + esc(p.note) + '</p>' : '') +
       (!compact && p.credit ? '<p class="muted pcredit">사진 출처: ' + esc(p.credit) + '</p>' : '') + '</div></article>';
   }
+  /* ---------- 필름코리아 경기 로케이션 (유형·지역이 겹치지 않게 무작위로) ---------- */
+  // 평소에는 서버가 받아 온 최신 데이터를 쓰고, 서버가 느리거나 안 될 때만 사이트에 넣어 둔 복사본을 쓴다.
+  function loadFk() {
+    if (S.fkP) return S.fkP;
+    var snap = function () { return json('data/filmkorea.json').then(function (d) { return ((d && d.items) || []).filter(Core.fkValid); }, function () { return []; }); };
+    var live = S.api && !S.api.demo && S.api.filmkorea
+      ? Promise.race([S.api.filmkorea(), new Promise(function (_, no) { setTimeout(no, 9000); })]).then(function (r) {
+        var l = r && r.ok ? (r.items || []).filter(Core.fkValid) : [];
+        return l.length ? l : snap();
+      }).catch(snap)
+      : snap();
+    S.fkP = live;
+    return live;
+  }
+  function fkCard(p) {
+    var tags = (p.tags || []).slice(0, 3).map(function (t) { return '<span class="tag">#' + esc(t) + '</span>'; }).join('');
+    return '<a class="card pcard fk" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' +
+      '<div class="pimg"><img src="' + esc(p.img) + '" alt="' + esc(p.name) + ' 사진" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="loc">' + esc(p.sdg) + '</span></div>' +
+      '<div class="pbody"><div class="pmeta">' + (p.c1 ? '<span class="badge">' + esc(p.c1) + '</span>' : '') + (p.c2 ? '<span class="badge">' + esc(p.c2) + '</span>' : '') + '</div>' +
+      '<h3>' + esc(p.name) + '</h3>' + (tags ? '<div class="tags">' + tags + '</div>' : '') +
+      '<p class="muted pcredit">필름코리아에서 자세히 보기 ↗</p></div></a>';
+  }
+  function fkSectionHtml() {
+    return '<section class="block fk-sec"><h2>필름코리아에 등록된 경기도 로케이션</h2>' +
+      '<p class="muted fk-note">' + K('필름코리아에 등록된 경기도 장소를 유형과 지역이_겹치지_않게 무작위로 보여 드려요. 장소를 누르면 필름코리아 상세_페이지가_새_창으로_열립니다.') + '</p>' +
+      '<div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div>' +
+      '<div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div>' +
+      '<p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 장소와 사진은 필름코리아에서 가져오며, 필름코리아에서 바뀌면 몇 시간 안에 이곳에도 반영돼요.</p></section>';
+  }
+  function initFk() {
+    if (!$('#fk-grid')) return;
+    loadFk().then(function (all) {
+      var g = $('#fk-grid'); if (!g) return;
+      if (!all.length) { g.innerHTML = '<p class="muted">지금은 필름코리아 장소를 불러오지 못했어요. 아래 버튼으로 필름코리아에서 직접 찾아보세요.</p>'; return; }
+      var seen = {}, n = window.innerWidth < 640 ? 4 : 6;   // 사진 한 장이 2MB쯤이라 좁은 화면(휴대폰)에서는 4곳만
+      function show() {
+        if (Object.keys(seen).length > all.length - n) seen = {};   // 거의 다 보여 드렸으면 처음부터 다시
+        var pick = Core.fkPick(all, n, seen);
+        pick.forEach(function (p) { seen[p.id] = 1; });
+        g.innerHTML = pick.map(fkCard).join('');
+        $('#fk-count').textContent = '경기도 ' + all.length + '곳 중 ' + pick.length + '곳';
+      }
+      var more = $('#fk-more'); more.hidden = false; more.addEventListener('click', show);
+      show();
+    });
+  }
+
   views.places = function () {
     app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '') + '<p class="loading">불러오는 중…</p>';
     loadPlaces().then(function (pl) {
       var rule = msg('info', '<strong>이렇게 골라 소개해요.</strong> 담당자가 공개해도_되는_곳인지 하나씩 확인해 승인한 장소만 올립니다. 마지막 촬영이 끝난 지 충분히_지난 곳만 소개하고, 특정_작품과 연결하지 않습니다. 지금 촬영 중인 장소는 올리지 않아요.');
-      if (!pl || !pl.items.length) { app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '') + rule + msg('info', '소개할 장소를 준비하고 있어요. 곧 올라옵니다.'); return; }
+      if (!pl || !pl.items.length) { app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 사진과 함께 소개합니다.') + fkSectionHtml() + rule + msg('info', '담당자가 고른 장소를 준비하고 있어요. 곧 올라옵니다.'); initFk(); return; }
       var all = pl.items, state = { feat: 'all', sigun: '', type: '' };
       var siguns = Core.SIGUN.filter(function (s) { return all.some(function (p) { return p.sigun === s; }); });
       var types = all.map(function (p) { return p.type; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
       var cnt = function (f) { return f === 'all' ? all.length : all.filter(function (p) { return p.featured === f; }).length; };
-      app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 사진과 함께 소개합니다.') + rule +
+      app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 사진과 함께 소개합니다.') + fkSectionHtml() + '<h2 class="sec-h">담당자가 고른 로케이션</h2>' + rule +
         (pl.meta && pl.meta.hasSample ? msg('warn', '<strong>시연용 예시입니다.</strong> 화면의 장소·설명·이미지는 실제 소개가 아니며, 담당자가 실제 장소와 사진으로 바꾸면 이 안내가 사라집니다.') : '') +
         '<div class="tabs" role="group" aria-label="추천 구분">' + [['all', '전체'], ['이번 주', '이번 주'], ['이달의', '이달의']].map(function (t, i) { return '<button type="button" data-f="' + t[0] + '" aria-pressed="' + (i === 0) + '">' + t[1] + ' ' + cnt(t[0]) + '</button>'; }).join('') + '</div>' +
         '<div class="fields" style="margin-bottom:22px"><div class="field"><label for="pl-sigun">시군</label><select id="pl-sigun">' + opts(siguns, '', '전체') + '</select></div><div class="field"><label for="pl-type">장소 유형</label><select id="pl-type">' + opts(types, '', '전체') + '</select></div></div>' +
@@ -544,6 +591,7 @@
       $('#pl-sigun').addEventListener('change', function () { state.sigun = this.value; draw(); });
       $('#pl-type').addEventListener('change', function () { state.type = this.value; draw(); });
       draw();
+      initFk();
     });
   };
 
@@ -592,7 +640,7 @@
       '<div class="card"><h2>이 사이트는 개인정보를 받지 않습니다</h2><table><thead><tr><th>받는 정보</th><th>받지 않는 정보</th></tr></thead><tbody><tr><td>물품·수량, 수령일·반납일<br>방문 횟수(하루 1번, 숫자만)<br>촬영 시군, 촬영 종류, 스탭 규모(선택)<br>규정 확인 체크</td><td>이름, 연락처, 이메일<br>소속, 제작사, 작품명, 영상물 제목<br>주소, 구체적인 촬영 장소<br>자유롭게 쓰는 입력칸 전체<br>로그인, 접속자 추적·식별</td></tr></tbody></table>' +
       '<p style="margin-top:12px">본인 확인은 수령일에 진흥원을 방문해 <strong>종이 인수증</strong>에 적는 방식으로 합니다. 예약은 코드로만 확인하기 때문에 코드를 잃어버리면 찾을 수 없습니다.</p><p>사이트를 열면 같은 브라우저에서 하루에 한 번 <strong>방문 횟수만 숫자로</strong> 셉니다. 누가 들어왔는지는 알 수 없고, 쿠키나 접속 정보는 저장하지 않습니다.</p></div>' +
       '<div class="card"><h2>로케이션 통계는 이렇게 공개합니다</h2><ul class="clean"><li>촬영지원 신청서 원본은 내부 업무용이며, 이 사이트는 원본에 연결돼 있지 않습니다. 가공·집계가 끝난 파일만 공개합니다.</li><li>작품명, 감독·배우, 제작사, 신청자 정보, 촬영 날짜, 구체 장소는 공개하지 않습니다.</li><li>' + 3 + '건 미만인 항목은 표시하지 않습니다.</li><li>시군은 올해 누적으로, 장소는 유형(도로·학교 등)까지만 보여 드립니다.</li><li>"로케이션 소개"의 구체적인 장소는 통계에서 자동으로 나온 것이 아니라, 담당자가 공개 가능 여부를 확인하고 승인한 곳만 올립니다. 마지막 촬영이 끝난 지 충분히 지난 곳이며, 특정 작품·인물·촬영 시점과 연결되는 내용은 쓰지 않습니다. 사진이 없는 곳은 소개하지 않고, 사진에 담긴 위치·기기 정보는 지웁니다.</li><li>공개 전에 작품명·인명이 섞여 있는지 자동으로 검사합니다.</li></ul></div>' +
-      '<div class="card"><h2>알아 두세요</h2><ul class="clean"><li>로케이션 촬영지원 신청서는 이 사이트가 아니라 진흥원의 별도 구글 폼입니다. 담당자가 연락하려면 신청 정보가 필요해서, 신청서에서는 이름·연락처 같은 정보를 받습니다.</li><li>키트 추천은 참고용이며 최종 수량은 수령할 때 담당자가 확인합니다.</li><li>수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다.</li><li>이 사이트를 운영하는 곳: ' + esc(S.cfg.orgName || '') + (S.cfg.contact ? ' · 문의 ' + esc(S.cfg.contact) : '') + '</li></ul></div>';
+      '<div class="card"><h2>알아 두세요</h2><ul class="clean"><li>로케이션 촬영지원 신청서는 이 사이트가 아니라 진흥원의 별도 구글 폼입니다. 담당자가 연락하려면 신청 정보가 필요해서, 신청서에서는 이름·연락처 같은 정보를 받습니다.</li><li>키트 추천은 참고용이며 최종 수량은 수령할 때 담당자가 확인합니다.</li><li>"로케이션 소개"의 필름코리아 장소는 필름코리아가 공개한 정보(장소 이름·지역·유형·사진)이며, 사진은 필름코리아 서버에서 직접 불러옵니다.</li><li>수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다.</li><li>이 사이트를 운영하는 곳: ' + esc(S.cfg.orgName || '') + (S.cfg.contact ? ' · 문의 ' + esc(S.cfg.contact) : '') + '</li></ul></div>';
   };
 
   /* ---------- 방문 수 ---------- */
@@ -621,6 +669,7 @@
     window.addEventListener('hashchange', route);
     route();
     countVisit();
+    if (/^#\/places/.test(location.hash)) loadFk();
   }).catch(function () {
     app.innerHTML = '<div class="msg err" role="alert">페이지를 불러오지 못했어요. 새로고침해 주세요.</div>';
   });

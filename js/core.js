@@ -189,25 +189,9 @@ var Core = (function () {
   /* ---------- 필름코리아 로케이션(외부 데이터는 항상 걸러서 쓴다) ---------- */
   var FK_IMG = /^https:\/\/filmkorea\.ecn\.cdn\.infralab\.net\/[A-Za-z0-9_\-\/.]+$/;
   var FK_VIEW = /^https:\/\/filmkorea\.or\.kr\/location\/location_view\.jsp\?id=\d+$/;
-  function fkStr(v, max) { return typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max) : ''; }
   // 이미 걸러진 항목인지 확인(화면 쪽 이중 점검). 사진·상세 주소가 필름코리아 것이 아니면 버린다.
   function fkValid(p) {
     return !!p && typeof p.name === 'string' && p.name.length > 0 && FK_IMG.test(p.img || '') && FK_VIEW.test(p.url || '');
-  }
-  // 필름코리아 API 원본 -> 화면에 필요한 항목만 남긴 목록(경기도, 사진·상세 주소가 있는 곳만)
-  function fkClean(raw) {
-    var out = [];
-    (Array.isArray(raw) ? raw : []).forEach(function (r) {
-      if (!r || fkStr(r.sd_nm, 20) !== '경기도') return;
-      var p = {
-        id: Number(r.location_id) || 0, name: fkStr(r.location_nm, 60), sdg: fkStr(r.sdg_nm, 30),
-        img: fkStr(r.image_url, 300), url: fkStr(r.view_url, 200),
-        tags: fkStr(r.hashtag, 200).split(',').map(function (t) { return fkStr(t, 12); }).filter(Boolean).slice(0, 4),
-        c1: fkStr(r.category01_nm, 30), c2: fkStr(r.category02_nm, 30), c3: fkStr(r.category03_nm, 30)
-      };
-      if (p.id && fkValid(p)) out.push(p);
-    });
-    return out;
   }
   // 유형(대분류)과 지역(시)이 겹치지 않게 n곳을 무작위로 고른다. avoid에 든 id는 가능하면 피한다.
   function fkPick(list, n, avoid, rnd) {
@@ -234,7 +218,7 @@ var Core = (function () {
     makeCode: makeCode, normalizeCode: normalizeCode,
     availability: availability, byId: byId, requiredVests: requiredVests, recommendedVests: recommendedVests,
     shouldExpire: shouldExpire, validateReserve: validateReserve, processReserve: processReserve, publicView: publicView,
-    fkClean: fkClean, fkValid: fkValid, fkPick: fkPick
+    fkValid: fkValid, fkPick: fkPick
   };
 })();
 

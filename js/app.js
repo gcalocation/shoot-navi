@@ -520,18 +520,11 @@
       (!compact && p.credit ? '<p class="muted pcredit">사진 출처: ' + esc(p.credit) + '</p>' : '') + '</div></article>';
   }
   /* ---------- 필름코리아 경기 로케이션 (유형·지역이 겹치지 않게 무작위로) ---------- */
-  // 평소에는 서버가 받아 온 최신 데이터를 쓰고, 서버가 느리거나 안 될 때만 사이트에 넣어 둔 복사본을 쓴다.
+  // data/filmkorea.json 은 GitHub가 매일 새벽에 필름코리아 API에서 받아 갱신한다(.github/workflows/filmkorea.yml).
   function loadFk() {
     if (S.fkP) return S.fkP;
-    var snap = function () { return json('data/filmkorea.json').then(function (d) { return ((d && d.items) || []).filter(Core.fkValid); }, function () { return []; }); };
-    var live = S.api && !S.api.demo && S.api.filmkorea
-      ? Promise.race([S.api.filmkorea(), new Promise(function (_, no) { setTimeout(no, 9000); })]).then(function (r) {
-        var l = r && r.ok ? (r.items || []).filter(Core.fkValid) : [];
-        return l.length ? l : snap();
-      }).catch(snap)
-      : snap();
-    S.fkP = live;
-    return live;
+    S.fkP = json('data/filmkorea.json').then(function (d) { return ((d && d.items) || []).filter(Core.fkValid); }, function () { return []; });
+    return S.fkP;
   }
   function fkCard(p) {
     var tags = (p.tags || []).slice(0, 3).map(function (t) { return '<span class="tag">#' + esc(t) + '</span>'; }).join('');
@@ -546,7 +539,7 @@
       '<p class="muted fk-note">' + K('필름코리아에 등록된 경기도 장소를 유형과 지역이_겹치지_않게 무작위로 보여 드려요. 장소를 누르면 필름코리아 상세_페이지가_새_창으로_열립니다.') + '</p>' +
       '<div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div>' +
       '<div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div>' +
-      '<p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 장소와 사진은 필름코리아에서 가져오며, 필름코리아에서 바뀌면 몇 시간 안에 이곳에도 반영돼요.</p></section>';
+      '<p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 장소와 사진은 필름코리아에서 가져오며, 하루에 한 번 새로 받아 와요.</p></section>';
   }
   function initFk() {
     if (!$('#fk-grid')) return;

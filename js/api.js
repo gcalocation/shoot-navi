@@ -66,8 +66,7 @@ var Api = (function () {
         return ok({ ok: true, reservation: Core.publicView(r, master.items) });
       },
       stats: function () { return ok({ ok: true, items: [] }); },
-      visit: function () { return ok({ ok: true }); },
-      filmkorea: function () { return ok({ ok: false }); }   // 체험 모드는 서버가 없으니 사이트에 넣어 둔 복사본을 쓴다
+      visit: function () { return ok({ ok: true }); }
     };
   }
 
@@ -89,8 +88,7 @@ var Api = (function () {
       lookup: function (code) { return get({ action: 'lookup', code: code }); },
       cancel: function (code) { return post({ action: 'cancel', code: code }); },
       stats: function () { return get({ action: 'stats' }); },
-      visit: function () { return post({ action: 'visit' }); },
-      filmkorea: function () { return get({ action: 'filmkorea' }); }
+      visit: function () { return post({ action: 'visit' }); }
     };
   }
 

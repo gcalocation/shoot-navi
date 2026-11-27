@@ -194,6 +194,18 @@ var Core = (function () {
   function fkValid(p) {
     return !!p && typeof p.name === 'string' && p.name.length > 0 && (FK_LOCAL.test(p.img || '') || FK_IMG.test(p.img || '')) && FK_VIEW.test(p.url || '');
   }
+  // 같은 글자(seed)면 항상 같은 순서가 나오는 난수. '이달의 로케이션'처럼 한 달 동안 같은 장소를 보여 줄 때 쓴다.
+  function seededRandom(seed) {
+    var str = String(seed), h = 1779033703 ^ str.length, i;
+    for (i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    var a = h >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
   // 유형(대분류)과 지역(시)이 겹치지 않게 n곳을 무작위로 고른다. avoid에 든 id는 가능하면 피한다.
   function fkPick(list, n, avoid, rnd) {
     rnd = rnd || Math.random;
@@ -219,7 +231,7 @@ var Core = (function () {
     makeCode: makeCode, normalizeCode: normalizeCode,
     availability: availability, byId: byId, requiredVests: requiredVests, recommendedVests: recommendedVests,
     shouldExpire: shouldExpire, validateReserve: validateReserve, processReserve: processReserve, publicView: publicView,
-    fkValid: fkValid, fkPick: fkPick
+    fkValid: fkValid, fkPick: fkPick, seededRandom: seededRandom
   };
 })();
 

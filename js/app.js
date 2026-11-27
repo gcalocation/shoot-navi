@@ -149,11 +149,9 @@
       var others = items().filter(function (it) { return main.indexOf(it.id) < 0 && r.avail[it.id]; });
       el.innerHTML = rows + (others.length ? '<div class="more"><p class="more-h">그 밖에도 <b>' + others.length + '종</b>을 더 빌릴 수 있어요</p><div class="tags">' + others.map(function (it) { return '<span class="tag">' + esc(shortName(it.name)) + ' <b class="num">' + r.avail[it.id].remaining + '</b></span>'; }).join('') + '</div></div>' : '');
     }).catch(function () { var el = $('#stock'); if (el) el.innerHTML = '<p class="muted">현황을 불러오지 못했어요.</p>'; });
-    loadPlaces().then(function (pl) {
-      var el = $('#home-places'); if (!el || !pl || !pl.items.length) return;
-      var pick = pl.items.filter(function (p) { return p.featured !== '상시'; }).slice(0, 3);
-      if (!pick.length) pick = pl.items.slice(0, 3);
-      el.innerHTML = '<div class="sec-h"><h2>이번에 소개하는 로케이션</h2><a href="#/places">전체 보기</a></div><div class="pgrid">' + pick.map(function (p) { return placeCard(p, true); }).join('') + '</div>';
+    loadFk().then(function (all) {
+      var el = $('#home-places'); if (!el || !all.length) return;
+      el.innerHTML = '<div class="sec-h"><h2>이달의 로케이션</h2><a href="#/places">전체 보기</a></div><div class="pgrid">' + monthlyFk(all).map(fkCard).join('') + '</div>';
     });
   };
 
@@ -504,87 +502,73 @@
     });
   }
 
-  /* ---------- 로케이션 소개 (담당자가 고르고 승인한 장소만) ---------- */
-  function loadPlaces() {
-    if (S.places !== undefined) return Promise.resolve(S.places);
-    return json('data/locations.json').then(function (d) { S.places = d && d.items ? d : null; return S.places; }, function () { S.places = null; return null; });
-  }
-  function placeCard(p, compact) {
-    var tags = (p.tags || []).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
-    return '<article class="card pcard' + (compact ? ' compact' : '') + '">' +
-      '<div class="pimg"><img src="' + esc(p.photo) + '" alt="' + esc(p.name) + (p.sample ? ' 예시 이미지' : ' 사진') + '" loading="lazy">' + (p.sample ? '<span class="sample-tag">예시</span>' : '') + '<span class="loc">' + esc(p.sigun) + '</span></div>' +
-      '<div class="pbody"><div class="pmeta"><span class="badge">' + esc(p.type) + '</span>' + (p.featured !== '상시' ? '<span class="badge ok">' + esc(p.featured) + '</span>' : '') + '</div>' +
-      '<h3>' + esc(p.name) + '</h3><p class="sum">' + esc(p.summary) + '</p>' +
-      (tags ? '<div class="tags" aria-label="어울리는 촬영">' + tags + '</div>' : '') +
-      (!compact && p.note ? '<p class="pnote"><strong>촬영 참고</strong> ' + esc(p.note) + '</p>' : '') +
-      (!compact && p.credit ? '<p class="muted pcredit">사진 출처: ' + esc(p.credit) + '</p>' : '') + '</div></article>';
-  }
-  /* ---------- 필름코리아 경기 로케이션 (유형·지역이 겹치지 않게 무작위로) ---------- */
-  // data/filmkorea.json 은 GitHub가 매일 새벽에 필름코리아 API에서 받아 갱신한다(.github/workflows/filmkorea.yml).
+  /* ---------- 로케이션 (필름코리아 데이터) ---------- */
+  // data/filmkorea.json 과 썸네일(img/fk)은 GitHub가 매일 새벽에 필름코리아 API에서 받아 갱신한다(.github/workflows/filmkorea.yml).
   function loadFk() {
     if (S.fkP) return S.fkP;
     S.fkP = json('data/filmkorea.json').then(function (d) { return ((d && d.items) || []).filter(Core.fkValid); }, function () { return []; });
     return S.fkP;
   }
+  function fkCity(p) { return String(p.sdg || '').split(' ')[0]; }
   function fkCard(p) {
     var tags = (p.tags || []).slice(0, 3).map(function (t) { return '<span class="tag">#' + esc(t) + '</span>'; }).join('');
     return '<a class="card pcard fk" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' +
       '<div class="pimg"><img src="' + esc(p.img) + '" alt="' + esc(p.name) + ' 사진" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="loc">' + esc(p.sdg) + '</span></div>' +
       '<div class="pbody"><div class="pmeta">' + (p.c1 ? '<span class="badge">' + esc(p.c1) + '</span>' : '') + (p.c2 ? '<span class="badge">' + esc(p.c2) + '</span>' : '') + '</div>' +
       '<h3>' + esc(p.name) + '</h3>' + (tags ? '<div class="tags">' + tags + '</div>' : '') +
-      '<p class="muted pcredit">필름코리아에서 자세히 보기 ↗</p></div></a>';
+      '<p class="muted pcredit">자세히 보기 ↗</p></div></a>';
   }
-  function fkSectionHtml() {
-    return '<section class="block fk-sec"><h2>필름코리아에 등록된 경기도 로케이션</h2>' +
-      '<p class="muted fk-note">' + K('필름코리아에 등록된 경기도 장소를 유형과 지역이_겹치지_않게 무작위로 보여 드려요. 장소를 누르면 필름코리아 상세_페이지가_새_창으로_열립니다.') + '</p>' +
-      '<div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div>' +
-      '<div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div>' +
-      '<p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 장소와 사진은 필름코리아에서 가져오며, 하루에 한 번 새로 받아 와요.</p></section>';
+  // 홈의 '이달의 로케이션': 한 달 동안 같은 3곳(유형·지역이 겹치지 않게). 달이 바뀌면 새로 고른다.
+  function monthlyFk(all) {
+    var sorted = all.slice().sort(function (a, b) { return a.id - b.id; });
+    return Core.fkPick(sorted, 3, null, Core.seededRandom(Core.todayKST().slice(0, 7)));
   }
-  function initFk() {
-    if (!$('#fk-grid')) return;
+
+  views.places = function () {
+    app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 소개합니다.') +
+      '<section class="block fk-sec"><div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div><div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div></section>' +
+      '<section class="block"><h2>시군·유형으로 찾아보기</h2><div class="fields" style="margin-bottom:22px"><div class="field"><label for="pl-sigun">시군</label><select id="pl-sigun"><option value="">전체</option></select></div><div class="field"><label for="pl-type">장소 유형</label><select id="pl-type"><option value="">전체</option></select></div></div>' +
+      '<p class="muted" id="pl-count" aria-live="polite"></p><div class="pgrid" id="pl-grid"></div><div class="row" style="margin-top:24px"><button class="btn alt" id="pl-more" type="button" hidden>더 보기</button></div></section>' +
+      '<div class="apply-cta"><p><strong>더 많은 로케이션이 궁금한가요?</strong><br>' + K('필름코리아는 한국영상위원회가_운영하는 전국_로케이션·촬영지원_사이트예요. 경기도를_포함한 전국_영상위원회의 로케이션을 찾아보고, 촬영지원도_신청할_수_있어요.') + '</p><div class="row">' + ext(fk('location'), '필름코리아에서 찾아보기', 'btn alt') + ext(fk('request'), '촬영지원 신청 안내', 'btn alt') + '</div></div>' +
+      (formUrl() ? '<div class="apply-cta"><p><strong>마음에 드는 장소가 있나요?</strong><br>' + K('촬영지원 신청서에 장소_이름을 적어 신청해 주세요. 신청서는 진흥원의 별도 폼이라 연락받을_정보를 적어야 해요.' + loginHint()) + '</p>' + ext(formUrl(), '촬영지원 신청서 열기', 'btn') + '</div>' : '') +
+      '<p class="muted fk-src">장소 정보와 사진 출처: ' + ext(fk('location'), '필름코리아') + ' · 하루에 한 번 새로 받아 와요.</p>';
     loadFk().then(function (all) {
       var g = $('#fk-grid'); if (!g) return;
-      if (!all.length) { g.innerHTML = '<p class="muted">지금은 필름코리아 장소를 불러오지 못했어요. 아래 버튼으로 필름코리아에서 직접 찾아보세요.</p>'; return; }
-      var seen = {}, n = window.innerWidth < 640 ? 4 : 6;   // 사진 한 장이 2MB쯤이라 좁은 화면(휴대폰)에서는 4곳만
-      function show() {
-        if (Object.keys(seen).length > all.length - n) seen = {};   // 거의 다 보여 드렸으면 처음부터 다시
-        var pick = Core.fkPick(all, n, seen);
+      if (!all.length) {
+        g.innerHTML = '<p class="muted">장소를 불러오지 못했어요. 잠시 뒤에 다시 열어 주세요.</p>';
+        $('#pl-sigun').disabled = true; $('#pl-type').disabled = true;
+        return;
+      }
+      // 대표 3곳: 열 때마다, 그리고 '다른 장소 보기'를 누를 때마다 무작위(유형·지역은 겹치지 않게)
+      var seen = {};
+      function feature() {
+        if (Object.keys(seen).length > all.length - 3) seen = {};
+        var pick = Core.fkPick(all, 3, seen);
         pick.forEach(function (p) { seen[p.id] = 1; });
         g.innerHTML = pick.map(fkCard).join('');
         $('#fk-count').textContent = '경기도 ' + all.length + '곳 중 ' + pick.length + '곳';
       }
-      var more = $('#fk-more'); more.hidden = false; more.addEventListener('click', show);
-      show();
-    });
-  }
-
-  views.places = function () {
-    app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '') + '<p class="loading">불러오는 중…</p>';
-    loadPlaces().then(function (pl) {
-      var rule = msg('info', '<strong>이렇게 골라 소개해요.</strong> 담당자가 공개해도_되는_곳인지 하나씩 확인해 승인한 장소만 올립니다. 마지막 촬영이 끝난 지 충분히_지난 곳만 소개하고, 특정_작품과 연결하지 않습니다. 지금 촬영 중인 장소는 올리지 않아요.');
-      if (!pl || !pl.items.length) { app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 사진과 함께 소개합니다.') + fkSectionHtml() + rule + msg('info', '담당자가 고른 장소를 준비하고 있어요. 곧 올라옵니다.'); initFk(); return; }
-      var all = pl.items, state = { feat: 'all', sigun: '', type: '' };
-      var siguns = Core.SIGUN.filter(function (s) { return all.some(function (p) { return p.sigun === s; }); });
-      var types = all.map(function (p) { return p.type; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-      var cnt = function (f) { return f === 'all' ? all.length : all.filter(function (p) { return p.featured === f; }).length; };
-      app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 사진과 함께 소개합니다.') + fkSectionHtml() + '<h2 class="sec-h">담당자가 고른 로케이션</h2>' + rule +
-        (pl.meta && pl.meta.hasSample ? msg('warn', '<strong>시연용 예시입니다.</strong> 화면의 장소·설명·이미지는 실제 소개가 아니며, 담당자가 실제 장소와 사진으로 바꾸면 이 안내가 사라집니다.') : '') +
-        '<div class="tabs" role="group" aria-label="추천 구분">' + [['all', '전체'], ['이번 주', '이번 주'], ['이달의', '이달의']].map(function (t, i) { return '<button type="button" data-f="' + t[0] + '" aria-pressed="' + (i === 0) + '">' + t[1] + ' ' + cnt(t[0]) + '</button>'; }).join('') + '</div>' +
-        '<div class="fields" style="margin-bottom:22px"><div class="field"><label for="pl-sigun">시군</label><select id="pl-sigun">' + opts(siguns, '', '전체') + '</select></div><div class="field"><label for="pl-type">장소 유형</label><select id="pl-type">' + opts(types, '', '전체') + '</select></div></div>' +
-        '<p class="muted" id="pl-count" aria-live="polite"></p><div class="pgrid" id="pl-grid"></div>' +
-        '<div class="apply-cta"><p><strong>더 많은 로케이션이 궁금한가요?</strong><br>' + K('필름코리아는 한국영상위원회가_운영하는 전국_로케이션·촬영지원_사이트예요. 경기도를_포함한 전국_영상위원회의 로케이션을 찾아보고, 촬영지원도_신청할_수_있어요.') + '</p><div class="row">' + ext(fk('location'), '필름코리아에서 찾아보기', 'btn alt') + ext(fk('request'), '촬영지원 신청 안내', 'btn alt') + '</div></div>' +
-        (formUrl() ? '<div class="apply-cta"><p><strong>마음에 드는 장소가 있나요?</strong><br>' + K('촬영지원 신청서에 장소_이름을 적어 신청해 주세요. 신청서는 진흥원의 별도 폼이라 연락받을_정보를 적어야 해요.' + loginHint()) + '</p>' + ext(formUrl(), '촬영지원 신청서 열기', 'btn') + '</div>' : '');
+      var more = $('#fk-more'); more.hidden = false; more.addEventListener('click', feature);
+      feature();
+      // 시군·유형으로 찾기
+      var order = Core.SIGUN.slice(), cities = all.map(fkCity).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+      cities.sort(function (a, b) { var x = order.indexOf(a), y = order.indexOf(b); return ((x < 0 ? 999 : x) - (y < 0 ? 999 : y)) || (a < b ? -1 : 1); });
+      var cnt = {}; all.forEach(function (p) { if (p.c1) cnt[p.c1] = (cnt[p.c1] || 0) + 1; });
+      var types = Object.keys(cnt).sort(function (a, b) { return (cnt[b] - cnt[a]) || (a < b ? -1 : 1); });
+      $('#pl-sigun').innerHTML = opts(cities, '', '전체');
+      $('#pl-type').innerHTML = opts(types, '', '전체');
+      var state = { sigun: '', type: '', shown: 12 };
       function draw() {
-        var list = all.filter(function (p) { return (state.feat === 'all' || p.featured === state.feat) && (!state.sigun || p.sigun === state.sigun) && (!state.type || p.type === state.type); });
-        $('#pl-count').textContent = list.length + '곳';
-        $('#pl-grid').innerHTML = list.length ? list.map(function (p) { return placeCard(p, false); }).join('') : '<p class="muted">조건에 맞는 장소가 없어요. 다른 조건을 골라 보세요.</p>';
+        var l = all.filter(function (p) { return (!state.sigun || fkCity(p) === state.sigun) && (!state.type || p.c1 === state.type); });
+        var part = l.slice(0, state.shown), rest = l.length - part.length, mb = $('#pl-more');
+        $('#pl-count').textContent = l.length + '곳';
+        $('#pl-grid').innerHTML = part.length ? part.map(fkCard).join('') : '<p class="muted">조건에 맞는 장소가 없어요. 다른 조건을 골라 보세요.</p>';
+        mb.hidden = rest <= 0; mb.textContent = '더 보기 (' + rest + '곳 남음)';
       }
-      $$('.tabs button').forEach(function (b) { b.addEventListener('click', function () { state.feat = b.getAttribute('data-f'); $$('.tabs button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); draw(); }); });
-      $('#pl-sigun').addEventListener('change', function () { state.sigun = this.value; draw(); });
-      $('#pl-type').addEventListener('change', function () { state.type = this.value; draw(); });
+      $('#pl-sigun').addEventListener('change', function () { state.sigun = this.value; state.shown = 12; draw(); });
+      $('#pl-type').addEventListener('change', function () { state.type = this.value; state.shown = 12; draw(); });
+      $('#pl-more').addEventListener('click', function () { state.shown += 12; draw(); });
       draw();
-      initFk();
     });
   };
 
@@ -600,7 +584,7 @@
       var m = t.meta || {};
       function sec(title, body, note) { return '<section class="block"><h2>' + title + '</h2><div class="well">' + body + '</div>' + (note ? '<p class="muted">' + K(note) + '</p>' : '') + '</section>'; }
       var place = t.placeTypes || {};
-      app.innerHTML = subnav('trends') + ph('Trends', '로케이션 트렌드', '') + '<div id="trend-places"></div><p class="muted" style="margin-bottom:34px">' + K('촬영지원 신청서를 집계한 통계입니다. 기준일은 ' + esc(m.asOf || '') + (m.provisional ? '이고 잠정 집계입니다.' : '입니다.') + ' 작품·제작사·신청자는 식별할 수 없고, ' + (m.k || 3) + '건_미만인 항목은 표시하지 않습니다.') + '</p>' +
+      app.innerHTML = subnav('trends') + ph('Trends', '로케이션 트렌드', '') + '<p class="muted" style="margin-bottom:34px">' + K('촬영지원 신청서를 집계한 통계입니다. 기준일은 ' + esc(m.asOf || '') + (m.provisional ? '이고 잠정 집계입니다.' : '입니다.') + ' 작품·제작사·신청자는 식별할 수 없고, ' + (m.k || 3) + '건_미만인 항목은 표시하지 않습니다.') + '</p>' +
         sec('월별 촬영지원 신청', Charts.columns((t.monthly || []).map(function (r) { return { label: r.month.slice(5) + '월' + (r.month === (m.asOf || '').slice(0, 7) ? '*' : ''), count: r.count }; })), '신청서 1건을 1건으로 셉니다. *표시는 기준일까지의 건수라 아직 진행 중인 달입니다.') +
         sec('작품 종류', Charts.hbars(t.kinds || [], { percent: true })) +
         sec('많이 찾는 촬영 장소 유형', '<div class="tabs" role="group" aria-label="기간 선택"><button type="button" data-p="recent" aria-pressed="true">최근 4주</button><button type="button" data-p="year" aria-pressed="false">올해 누적</button></div><div id="place-out"></div>', '신청서 본문에서 장소 유형을 읽어 센 값이라 한 신청이 여러 유형에 들어갈 수 있어요.') +
@@ -611,12 +595,6 @@
         sec('1차 배급 매체', Charts.hbars(t.distribution || [], { percent: true })) +
         '<div id="rental-stats"></div>' +
         '<p class="muted"><a href="#/privacy">어떤 정보를 어떻게 공개하는지 보기</a></p>';
-      loadPlaces().then(function (pl) {
-        var el = $('#trend-places'); if (!el || !pl || !pl.items.length) return;
-        var pick = pl.items.filter(function (p) { return p.featured !== '상시'; }).slice(0, 3);
-        if (!pick.length) pick = pl.items.slice(0, 3);
-        el.innerHTML = '<section class="block"><h2>이번에 소개하는 로케이션</h2><p class="muted">통계가 아니라 담당자가 직접 고른 장소입니다.' + (pl.meta && pl.meta.hasSample ? ' <strong>(시연용 예시)</strong>' : '') + '</p><div class="pgrid">' + pick.map(function (p) { return placeCard(p, true); }).join('') + '</div><p style="margin-top:16px"><a href="#/places">로케이션 소개 전체 보기</a></p></section>';
-      });
       function drawPlace(p) { $('#place-out').innerHTML = Charts.hbars(p === 'recent' ? place.recent4w || [] : place.year || []); }
       drawPlace('recent');
       $$('.tabs button').forEach(function (b) { b.addEventListener('click', function () { $$('.tabs button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); drawPlace(b.getAttribute('data-p')); }); });
@@ -632,8 +610,8 @@
     app.innerHTML = ph('Privacy', '개인정보와 공개 원칙', '이 사이트가 받지 않는 정보와, 통계·장소를 공개하는 기준입니다.') +
       '<div class="card"><h2>이 사이트는 개인정보를 받지 않습니다</h2><table><thead><tr><th>받는 정보</th><th>받지 않는 정보</th></tr></thead><tbody><tr><td>물품·수량, 수령일·반납일<br>방문 횟수(하루 1번, 숫자만)<br>촬영 시군, 촬영 종류, 스탭 규모(선택)<br>규정 확인 체크</td><td>이름, 연락처, 이메일<br>소속, 제작사, 작품명, 영상물 제목<br>주소, 구체적인 촬영 장소<br>자유롭게 쓰는 입력칸 전체<br>로그인, 접속자 추적·식별</td></tr></tbody></table>' +
       '<p style="margin-top:12px">본인 확인은 수령일에 진흥원을 방문해 <strong>종이 인수증</strong>에 적는 방식으로 합니다. 예약은 코드로만 확인하기 때문에 코드를 잃어버리면 찾을 수 없습니다.</p><p>사이트를 열면 같은 브라우저에서 하루에 한 번 <strong>방문 횟수만 숫자로</strong> 셉니다. 누가 들어왔는지는 알 수 없고, 쿠키나 접속 정보는 저장하지 않습니다.</p></div>' +
-      '<div class="card"><h2>로케이션 통계는 이렇게 공개합니다</h2><ul class="clean"><li>촬영지원 신청서 원본은 내부 업무용이며, 이 사이트는 원본에 연결돼 있지 않습니다. 가공·집계가 끝난 파일만 공개합니다.</li><li>작품명, 감독·배우, 제작사, 신청자 정보, 촬영 날짜, 구체 장소는 공개하지 않습니다.</li><li>' + 3 + '건 미만인 항목은 표시하지 않습니다.</li><li>시군은 올해 누적으로, 장소는 유형(도로·학교 등)까지만 보여 드립니다.</li><li>"로케이션 소개"의 구체적인 장소는 통계에서 자동으로 나온 것이 아니라, 담당자가 공개 가능 여부를 확인하고 승인한 곳만 올립니다. 마지막 촬영이 끝난 지 충분히 지난 곳이며, 특정 작품·인물·촬영 시점과 연결되는 내용은 쓰지 않습니다. 사진이 없는 곳은 소개하지 않고, 사진에 담긴 위치·기기 정보는 지웁니다.</li><li>공개 전에 작품명·인명이 섞여 있는지 자동으로 검사합니다.</li></ul></div>' +
-      '<div class="card"><h2>알아 두세요</h2><ul class="clean"><li>로케이션 촬영지원 신청서는 이 사이트가 아니라 진흥원의 별도 구글 폼입니다. 담당자가 연락하려면 신청 정보가 필요해서, 신청서에서는 이름·연락처 같은 정보를 받습니다.</li><li>키트 추천은 참고용이며 최종 수량은 수령할 때 담당자가 확인합니다.</li><li>"로케이션 소개"의 필름코리아 장소는 필름코리아가 공개한 정보(장소 이름·지역·유형·사진)이며, 사진은 필름코리아 서버에서 직접 불러옵니다.</li><li>수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다.</li><li>이 사이트를 운영하는 곳: ' + esc(S.cfg.orgName || '') + (S.cfg.contact ? ' · 문의 ' + esc(S.cfg.contact) : '') + '</li></ul></div>';
+      '<div class="card"><h2>로케이션 통계는 이렇게 공개합니다</h2><ul class="clean"><li>촬영지원 신청서 원본은 내부 업무용이며, 이 사이트는 원본에 연결돼 있지 않습니다. 가공·집계가 끝난 파일만 공개합니다.</li><li>작품명, 감독·배우, 제작사, 신청자 정보, 촬영 날짜, 구체 장소는 공개하지 않습니다.</li><li>' + 3 + '건 미만인 항목은 표시하지 않습니다.</li><li>시군은 올해 누적으로, 장소는 유형(도로·학교 등)까지만 보여 드립니다.</li><li>"로케이션 소개"의 장소는 필름코리아에 공개된 정보(장소 이름·지역·유형·사진)이며, 촬영지원 신청서 통계와는 연결되지 않습니다. 사진은 크기를 줄여 보여 드리고, 사진에 담긴 위치·기기 정보는 지웁니다. 하루에 한 번 새로 받아 옵니다.</li><li>공개 전에 작품명·인명이 섞여 있는지 자동으로 검사합니다.</li></ul></div>' +
+      '<div class="card"><h2>알아 두세요</h2><ul class="clean"><li>로케이션 촬영지원 신청서는 이 사이트가 아니라 진흥원의 별도 구글 폼입니다. 담당자가 연락하려면 신청 정보가 필요해서, 신청서에서는 이름·연락처 같은 정보를 받습니다.</li><li>키트 추천은 참고용이며 최종 수량은 수령할 때 담당자가 확인합니다.</li><li>수량과 규정은 진흥원 사정에 따라 바뀔 수 있습니다.</li><li>이 사이트를 운영하는 곳: ' + esc(S.cfg.orgName || '') + (S.cfg.contact ? ' · 문의 ' + esc(S.cfg.contact) : '') + '</li></ul></div>';
   };
 
   /* ---------- 방문 수 ---------- */

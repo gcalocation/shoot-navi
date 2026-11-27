@@ -129,7 +129,7 @@
       '<div class="frame"><h1>경기도 촬영,<br>장비부터 장소까지<br>한 곳에서 준비하세요.</h1></div>' +
       '<p class="lede">' + K('안전통제 물품을 미리 예약하고,<br>촬영 환경에 맞는 구성을 추천받고,<br>경기도 촬영지를 둘러보세요.') + '</p>' +
       '<div class="row"><a class="btn" href="#/gear">장비 예약하기</a><a class="btn alt" href="#/kit">키트 추천받기</a></div>' +
-      (formUrl() ? '<p class="muted" style="margin:20px 0 0">' + K('로케이션 촬영지원이 필요하다면 ') + ext(formUrl(), '촬영지원 신청서') + K('를 작성해 주세요.') + '</p>' : '') + '</div>' +
+      (formUrl() ? '<p style="margin:20px 0 0">' + ext(formUrl(), '로케이션 촬영지원 신청서') + '</p>' : '') + '</div>' +
       '<aside class="sheet" aria-label="수령 가능 현황"><div class="sheet-h"><b>수령 가능 현황</b><span class="live"><i></i>' + (S.api.demo ? '예시' : '실시간') + '</span></div>' +
       '<p class="sheet-d">' + ko(day) + ' 수령 기준</p><div class="stock" id="stock"><p class="muted">불러오는 중…</p></div>' +
       '<p class="sheet-f"><span class="muted">보유 수량 중 남은 수량</span><a href="#/gear">날짜 골라 예약하기</a></p></aside></section>' +
@@ -139,11 +139,11 @@
       '<li><h3>직접 반납</h3><p>' + K('반납일에 방문해 반납합니다. 택배·퀵·우편은 받지_않아요.') + '</p></li></ol>' +
       '<div id="home-places"></div>' +
       '<div class="sec-h"><h2>더 알아보기</h2></div><div class="linkrows" style="--cols:' + (formUrl() ? 2 : 3) + '">' +
-      (formUrl() ? linkRow(formUrl(), ICON.apply, '로케이션 촬영지원 신청', '진흥원의 별도 신청서로 접수해요. 연락받을_정보를 적어야 해요.' + loginHint()).replace('<a class="linkrow" href=', '<a class="linkrow" target="_blank" rel="noopener" href=') : '') +
+      (formUrl() ? linkRow(formUrl(), ICON.apply, '로케이션 촬영지원 신청', '').replace('<a class="linkrow" href=', '<a class="linkrow" target="_blank" rel="noopener" href=') : '') +
       linkRowExt(fk('location'), ICON.globe, '필름코리아', '경기도를_포함한 전국_영상위원회의 로케이션을 찾아보고, 촬영지원도 신청할_수 있어요.') +
       linkRow('#/prep', ICON.prep, '촬영 준비', '신청_시기_계산, 관할_확인, 현장_체크리스트') +
       linkRow('#/trends', ICON.chart, '로케이션 트렌드', '월별_신청_흐름과 많이_찾는 장소_유형') + '</div>' +
-      '<p class="muted" style="margin-top:28px">' + K('로케이션 촬영지원 신청은 이 사이트에서 받지 않고, 기존_신청서로 접수합니다.') + '</p>';
+      '';
     S.api.availability(day, day).then(function (r) {
       var el = $('#stock'); if (!el) return;
       if (!r.ok) { el.innerHTML = '<p class="muted">현황을 불러오지 못했어요.</p>'; return; }
@@ -483,7 +483,7 @@
   views.prep = function () {
     var o = S.rules.options;
     app.innerHTML = ph('Prepare', '촬영 준비', '선택한 내용은 저장되지 않습니다.') +
-      '<div class="card"><h2>로케이션 촬영지원 신청</h2>' + (S.cfg.applyFormUrl ? '<p>' + K(esc(S.cfg.applyFormNote || '') + loginHint()) + '</p><p><a class="btn" href="' + esc(S.cfg.applyFormUrl) + '" target="_blank" rel="noopener">촬영지원 신청서 열기</a></p>' : '<p>' + esc(S.cfg.applyFormNote || '') + ' 신청서 링크는 준비 중입니다.</p>') + '</div>' +
+      '<div class="card"><h2>로케이션 촬영지원 신청</h2>' + (S.cfg.applyFormUrl ? '<p><a class="btn" href="' + esc(S.cfg.applyFormUrl) + '" target="_blank" rel="noopener">촬영지원 신청서 열기</a></p>' : '<p>신청서 링크는 준비 중입니다.</p>') + '</div>' +
       '<div class="card"><h2>신청은 언제까지 해야 할까요?</h2><div class="fields"><div class="field"><label for="p-date">크랭크인(첫 촬영) 예정일</label><input type="date" id="p-date"></div><div class="field"><label for="p-kind">작품 종류</label><select id="p-kind">' + opts(Core.KINDS, Core.KINDS[0]) + '</select></div></div><button class="btn" id="p-go" type="button">확인하기</button><div id="p-out"></div></div>' +
       '<div class="card"><h2>우리 지역이 맞나요?</h2><div class="field"><label for="a-reg">촬영하려는 지역</label><select id="a-reg">' + opts(['경기도', '서울', '인천', '그 밖의 지역'], '', '선택') + '</select></div><div id="a-out"></div></div>' +
       '<div class="card"><h2>촬영 전 체크리스트</h2><div class="field"><label for="c-place">촬영 장소</label><select id="c-place"><option value="">선택</option>' + o.place.map(function (p) { return '<option value="' + p.v + '">' + esc(p.t) + '</option>'; }).join('') + '</select></div><div id="c-out"></div></div>';
@@ -535,11 +535,11 @@
 
   views.places = function () {
     app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 소개합니다.') +
-      '<section class="block fk-sec"><div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div><div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div><p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 하루에 한 번 새로 받아 와요.</p></section>' +
+      '<section class="block fk-sec"><div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div><div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div><p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + '</p></section>' +
       '<section class="block"><h2>시군·유형으로 찾아보기</h2><div class="fields" style="margin-bottom:22px"><div class="field"><label for="pl-sigun">시군</label><select id="pl-sigun"><option value="">전체</option></select></div><div class="field"><label for="pl-type">장소 유형</label><select id="pl-type"><option value="">전체</option></select></div></div>' +
       '<p class="muted" id="pl-count" aria-live="polite"></p><div class="pgrid" id="pl-grid"></div></section>' +
       '<div class="apply-cta"><p><strong>더 많은 로케이션이 궁금한가요?</strong><br>' + K('필름코리아는 한국영상위원회가_운영하는 전국_로케이션·촬영지원_사이트예요. 경기도를_포함한 전국_영상위원회의 로케이션을 찾아보고, 촬영지원도_신청할_수_있어요.') + '</p><div class="row">' + ext(fk('location'), '필름코리아에서 찾아보기', 'btn alt') + ext(fk('request'), '촬영지원 신청 안내', 'btn alt') + '</div></div>' +
-      (formUrl() ? '<div class="apply-cta"><p><strong>마음에 드는 장소가 있나요?</strong><br>' + K('촬영지원 신청서에 장소_이름을 적어 신청해 주세요. 신청서는 진흥원의 별도 폼이라 연락받을_정보를 적어야 해요.' + loginHint()) + '</p>' + ext(formUrl(), '촬영지원 신청서 열기', 'btn') + '</div>' : '') +
+      (formUrl() ? '<div class="apply-cta"><p><strong>마음에 드는 장소가 있나요?</strong></p>' + ext(formUrl(), '촬영지원 신청서 열기', 'btn') + '</div>' : '') +
       '';
     loadFk().then(function (all) {
       var g = $('#fk-grid'); if (!g) return;

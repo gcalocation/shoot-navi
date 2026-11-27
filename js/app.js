@@ -80,6 +80,12 @@
       return '<label><input type="radio" name="' + name + '" value="' + esc(o.v) + '"' + ((sel == null ? i === 0 : o.v === sel) ? ' checked' : '') + '><span>' + esc(o.t) + '</span></label>';
     }).join('') + '</div>';
   }
+  // 여러 개를 고를 수 있는 선택 버튼. sel: 처음 체크해 둘 값 목록
+  function segMulti(name, arr, sel) {
+    return '<div class="seg" role="group">' + arr.map(function (o) {
+      return '<label><input type="checkbox" name="' + name + '" value="' + esc(o.v) + '"' + ((sel || []).indexOf(o.v) >= 0 ? ' checked' : '') + '><span>' + esc(o.t) + '</span></label>';
+    }).join('') + '</div>';
+  }
   function settings() { return S.master.settings || {}; }
   function dateBounds() {
     var s = settings(), today = Core.todayKST();
@@ -151,7 +157,7 @@
     }).catch(function () { var el = $('#stock'); if (el) el.innerHTML = '<p class="muted">현황을 불러오지 못했어요.</p>'; });
     loadFk().then(function (all) {
       var el = $('#home-places'); if (!el || !all.length) return;
-      el.innerHTML = '<div class="sec-h"><h2>이달의 로케이션</h2><a href="#/places">전체 보기</a></div><div class="pgrid">' + monthlyFk(all).map(fkCard).join('') + '</div>';
+      el.innerHTML = '<div class="sec-h"><h2>이달의 로케이션</h2><a href="#/places">전체 보기</a></div><div class="pgrid">' + monthlyFk(all).map(fkCard).join('') + '</div><p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + '</p>';
     });
   };
 
@@ -338,7 +344,7 @@
     app.innerHTML =
       ph('Kit', '키트 추천', '촬영 환경을 고르면 필요한 물품과 수량, 현장 체크리스트를 알려 드려요.', 'one') +
       '<form id="kit-form" class="plate" style="padding-top:30px;padding-bottom:26px" novalidate>' +
-      f('촬영 장소', seg('place', o.place)) + f('촬영 시간', seg('time', o.time)) + f('하루 촬영 시간', seg('hours', o.hours)) +
+      f('촬영 장소 (여러 개 선택 가능)', segMulti('place', o.place, [o.place[0].v])) + f('촬영 시간 (여러 개 선택 가능)', segMulti('time', o.time, [o.time[0].v])) + f('하루 촬영 시간', seg('hours', o.hours)) +
       f('차량이 지나가거나 움직이는 장면이 있나요?', seg('vehicle', [{ v: '0', t: '아니요' }, { v: '1', t: '예' }])) +
       f('보행자·주민이 많은 곳인가요?', seg('crowd', [{ v: '0', t: '아니요' }, { v: '1', t: '예' }])) +
       '<div class="fields">' +
@@ -350,17 +356,20 @@
     $('#kit-form').addEventListener('submit', onKit);
   };
   function f(label, html) { return '<div class="field"><label>' + esc(label) + '</label>' + html + '</div>'; }
+  function checked(name) { return $$('input[name="' + name + '"]:checked').map(function (e) { return e.value; }); }
   function radio(name) { var el = $('input[name="' + name + '"]:checked'); return el ? el.value : ''; }
   function onKit(ev) {
     ev.preventDefault();
-    var inp = { place: radio('place'), time: radio('time'), hours: radio('hours'), vehicle: radio('vehicle') === '1', crowd: radio('crowd') === '1', control: +$('#k-control').value, tier: +$('#k-staff').value, kind: $('#k-kind').value };
+    var inp = { place: checked('place'), time: checked('time'), hours: radio('hours'), vehicle: radio('vehicle') === '1', crowd: radio('crowd') === '1', control: +$('#k-control').value, tier: +$('#k-staff').value, kind: $('#k-kind').value };
     var s = $('#k-start').value, e = $('#k-end').value, out = $('#kit-out');
+    if (!inp.place.length || !inp.time.length) { out.innerHTML = msg('warn', '<strong>' + (!inp.place.length ? '촬영 장소를' : '촬영 시간을') + ' 하나 이상 골라 주세요.</strong>'); return; }
     var list0 = Kit.compute(inp, S.rules, idx());
     var useDates = s && e && !dateProblems(s, e).length;
     var p = useDates ? S.api.availability(s, e).then(function (r) { return r.ok ? r.avail : null; }) : Promise.resolve(null);
     p.then(function (avail) {
       if (!avail) { avail = {}; items().forEach(function (it) { avail[it.id] = { stock: it.stock, remaining: it.stock }; }); }
-      var fitted = Kit.fit(list0, avail).filter(function (x) { return x.want > 0; });
+      var ix0 = idx();
+      var fitted = Kit.fit(list0, avail).filter(function (x) { return x.want > 0 && ix0[x.id]; });
       var shorts = fitted.filter(function (x) { return x.short > 0; });
       var chk = Kit.checklist(inp, S.texts);
       var cartNow = {}; fitted.forEach(function (x) { if (x.qty > 0) cartNow[x.id] = x.qty; });
@@ -526,12 +535,12 @@
 
   views.places = function () {
     app.innerHTML = subnav('places') + ph('Locations', '로케이션 소개', '경기도에서 촬영하기 좋은 장소를 소개합니다.') +
-      '<section class="block fk-sec"><div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div><div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div></section>' +
+      '<section class="block fk-sec"><div class="fk-bar"><span class="muted" id="fk-count" aria-live="polite"></span><button class="btn sm alt" id="fk-more" type="button" hidden>다른 장소 보기</button></div><div class="pgrid" id="fk-grid"><p class="loading">불러오는 중…</p></div><p class="muted fk-src">출처: ' + ext(fk('location'), '필름코리아') + ' · 하루에 한 번 새로 받아 와요.</p></section>' +
       '<section class="block"><h2>시군·유형으로 찾아보기</h2><div class="fields" style="margin-bottom:22px"><div class="field"><label for="pl-sigun">시군</label><select id="pl-sigun"><option value="">전체</option></select></div><div class="field"><label for="pl-type">장소 유형</label><select id="pl-type"><option value="">전체</option></select></div></div>' +
-      '<p class="muted" id="pl-count" aria-live="polite"></p><div class="pgrid" id="pl-grid"></div><div class="row" style="margin-top:24px"><button class="btn alt" id="pl-more" type="button" hidden>더 보기</button></div></section>' +
+      '<p class="muted" id="pl-count" aria-live="polite"></p><div class="pgrid" id="pl-grid"></div></section>' +
       '<div class="apply-cta"><p><strong>더 많은 로케이션이 궁금한가요?</strong><br>' + K('필름코리아는 한국영상위원회가_운영하는 전국_로케이션·촬영지원_사이트예요. 경기도를_포함한 전국_영상위원회의 로케이션을 찾아보고, 촬영지원도_신청할_수_있어요.') + '</p><div class="row">' + ext(fk('location'), '필름코리아에서 찾아보기', 'btn alt') + ext(fk('request'), '촬영지원 신청 안내', 'btn alt') + '</div></div>' +
       (formUrl() ? '<div class="apply-cta"><p><strong>마음에 드는 장소가 있나요?</strong><br>' + K('촬영지원 신청서에 장소_이름을 적어 신청해 주세요. 신청서는 진흥원의 별도 폼이라 연락받을_정보를 적어야 해요.' + loginHint()) + '</p>' + ext(formUrl(), '촬영지원 신청서 열기', 'btn') + '</div>' : '') +
-      '<p class="muted fk-src">장소 정보와 사진 출처: ' + ext(fk('location'), '필름코리아') + ' · 하루에 한 번 새로 받아 와요.</p>';
+      '';
     loadFk().then(function (all) {
       var g = $('#fk-grid'); if (!g) return;
       if (!all.length) {
@@ -557,17 +566,14 @@
       var types = Object.keys(cnt).sort(function (a, b) { return (cnt[b] - cnt[a]) || (a < b ? -1 : 1); });
       $('#pl-sigun').innerHTML = opts(cities, '', '전체');
       $('#pl-type').innerHTML = opts(types, '', '전체');
-      var state = { sigun: '', type: '', shown: 12 };
+      var state = { sigun: '', type: '' };
       function draw() {
         var l = all.filter(function (p) { return (!state.sigun || fkCity(p) === state.sigun) && (!state.type || p.c1 === state.type); });
-        var part = l.slice(0, state.shown), rest = l.length - part.length, mb = $('#pl-more');
         $('#pl-count').textContent = l.length + '곳';
-        $('#pl-grid').innerHTML = part.length ? part.map(fkCard).join('') : '<p class="muted">조건에 맞는 장소가 없어요. 다른 조건을 골라 보세요.</p>';
-        mb.hidden = rest <= 0; mb.textContent = '더 보기 (' + rest + '곳 남음)';
+        $('#pl-grid').innerHTML = l.length ? l.map(fkCard).join('') : '<p class="muted">조건에 맞는 장소가 없어요. 다른 조건을 골라 보세요.</p>';
       }
-      $('#pl-sigun').addEventListener('change', function () { state.sigun = this.value; state.shown = 12; draw(); });
-      $('#pl-type').addEventListener('change', function () { state.type = this.value; state.shown = 12; draw(); });
-      $('#pl-more').addEventListener('click', function () { state.shown += 12; draw(); });
+      $('#pl-sigun').addEventListener('change', function () { state.sigun = this.value; draw(); });
+      $('#pl-type').addEventListener('change', function () { state.type = this.value; draw(); });
       draw();
     });
   };

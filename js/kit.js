@@ -6,6 +6,7 @@ var Kit = (function () {
   'use strict';
 
   function has(arr, v) { return arr.indexOf(v) >= 0; }
+  function arr(v) { return Array.isArray(v) ? v : (v ? [v] : []); }   // 값 하나(문자열)도, 여러 개(배열)도 받는다
 
   function matches(w, inp) {
     if (w.place && !has(w.place, inp.place)) return false;
@@ -20,10 +21,12 @@ var Kit = (function () {
     return true;
   }
 
+  // 한 가지 상황(장소 하나, 시간 하나)에 대한 추천.
   // inp: {place, time, hours, vehicle, crowd, control(0~8), tier(0~4), kind}
-  function compute(inp, rules, itemsById) {
+  function computeOne(inp, rules, itemsById) {
     var acc = {}, order = [];
     rules.rules.forEach(function (r) {
+      if (!itemsById[r.item]) return;   // 지금 빌릴 수 없는 물품(사용 중지 등)은 추천하지 않는다
       if (!matches(r.when || {}, inp)) return;
       var q = r.qty || {};
       var n = (q.base || 0) + (q.perControl || 0) * inp.control + (q.perTier || 0) * inp.tier;
@@ -37,8 +40,11 @@ var Kit = (function () {
     });
 
     var list = order.map(function (id) {
-      var it = acc[id], cap = (rules.caps && rules.caps[id]) || (itemsById[id] && itemsById[id].max) || it.qty;
-      it.qty = Math.min(it.qty, cap);
+      var it = acc[id], caps = [];
+      // 추천 수량은 규칙표의 상한과, 한 번에 빌릴 수 있는 최대 수량(물품의 1건 최대) 중 작은 쪽을 넘지 않는다.
+      if (rules.caps && rules.caps[id]) caps.push(rules.caps[id]);
+      if (itemsById[id] && itemsById[id].max) caps.push(itemsById[id].max);
+      if (caps.length) it.qty = Math.min.apply(null, [it.qty].concat(caps));
       return it;
     });
 
@@ -49,9 +55,31 @@ var Kit = (function () {
       list.forEach(function (x) { if (x.id === 'walkie') w = x.qty; if (x.id === 'baton') b = x.qty; });
       var rec = Math.max(1, w, b);
       var cap = (itemsById.vest && itemsById.vest.max) || rec;
-      list.push({ id: 'vest', qty: Math.min(rec, cap), reasons: ['안전통제 장비를 빌리면 안전 조끼를 함께 빌려야 합니다. 통제 요원과 무전기를 쓰는 사람 수에 맞춰 권장 개수를 잡았습니다.'] });
+      var why = ['안전통제 장비를 빌리면 안전 조끼를 함께 빌려야 합니다. 통제 요원과 무전기를 쓰는 사람 수에 맞춰 권장 개수를 잡았습니다.'];
+      if (inp.time === 'night') why.push('야간에는 통제 요원이 멀리서도 눈에 띄도록 모두 입는 것이 좋습니다.');
+      list.push({ id: 'vest', qty: Math.min(rec, cap), reasons: why });
     }
     return list;
+  }
+
+  // 장소·시간을 여러 개 골랐을 때: 장소×시간 조합마다 따로 계산해서, 물품별로 가장 많이 필요한 수량을 쓴다.
+  // (예: 도로+공원, 낮+밤이면 도로·밤 기준이 가장 많으니 그 수량이 나온다. 규칙을 그대로 두고 여러 상황을 겹쳐 본다.)
+  function compute(inp, rules, itemsById) {
+    var places = arr(inp.place), times = arr(inp.time);
+    if (!places.length) places = [''];
+    if (!times.length) times = [''];
+    var acc = {}, order = [];
+    places.forEach(function (p) {
+      times.forEach(function (t) {
+        var one = computeOne(Object.assign({}, inp, { place: p, time: t }), rules, itemsById);
+        one.forEach(function (x) {
+          if (!acc[x.id]) { acc[x.id] = { id: x.id, qty: 0, reasons: [] }; order.push(x.id); }
+          if (x.qty > acc[x.id].qty) acc[x.id].qty = x.qty;
+          x.reasons.forEach(function (r) { if (acc[x.id].reasons.indexOf(r) < 0) acc[x.id].reasons.push(r); });
+        });
+      });
+    });
+    return order.map(function (id) { return acc[id]; });
   }
 
   // 재고(avail: {id:{stock,remaining}}) 안으로 줄이고, 부족분을 기록한다.
@@ -66,8 +94,8 @@ var Kit = (function () {
   function checklist(inp, texts) {
     var out = [], seen = {};
     function add(arr) { (arr || []).forEach(function (t) { if (!seen[t]) { seen[t] = 1; out.push(t); } }); }
-    add(texts.byPlace && texts.byPlace[inp.place]);
-    if (inp.time === 'night') add(texts.night);
+    arr(inp.place).forEach(function (p) { add(texts.byPlace && texts.byPlace[p]); });
+    if (has(arr(inp.time), 'night')) add(texts.night);
     if (inp.crowd) add(texts.crowd);
     if (inp.hours === 'long') add(texts.long);
     if (inp.vehicle) add(texts.vehicle);

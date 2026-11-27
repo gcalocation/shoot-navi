@@ -20,7 +20,7 @@
     {"item": "walkie", "when": {}, "qty": {"base": 2, "perControl": 1, "perTier": 1}, "why": "통제 지점과 연출·제작부가 바로 연락하려면 필요합니다. 통제 지점 수와 스탭 규모에 맞춰 늘렸습니다."},
 
     {"item": "baton", "when": {"minControl": 1}, "qty": {"base": 0, "perControl": 2}, "why": "통제 지점마다 2개(양쪽 유도)를 기준으로 잡았습니다."},
-    {"item": "baton", "when": {"time": ["night"], "minControl": 1}, "qty": {"base": 2}, "why": "야간에는 멀리서도 보이도록 여유분을 더했습니다."},
+    {"item": "baton", "when": {"time": ["night"]}, "qty": {"base": 2}, "why": "야간 촬영에는 멀리서도 눈에 띄도록 경광봉을 기본으로 챙깁니다."},
     {"item": "baton", "when": {"vehicle": true, "minControl": 1}, "qty": {"perControl": 1}, "why": "차량이 지나가는 장면은 통제 지점마다 1개씩 더 필요합니다."},
 
     {"item": "cone", "when": {"place": ["road"], "minControl": 1}, "qty": {"perControl": 6}, "why": "도로 통제는 지점당 6개를 기준으로 잡았습니다."},
